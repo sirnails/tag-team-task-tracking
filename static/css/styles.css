@@ -1,4 +1,5 @@
 :root {
+    /* Light mode variables */
     --primary: #6c5ce7;
     --primary-light: #a29bfe;
     --secondary: #00b894;
@@ -7,9 +8,23 @@
     --light: #f8f9fa;
     --dark: #343a40;
     --gray: #adb5bd;
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    --component-bg: white;
+    --text-color: var(--dark);
+    --input-bg: white;
+    --input-text: var(--dark);
     --border-radius: 12px;
     --shadow: 0 8px 24px rgba(0,0,0,0.1);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+[data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #1a1c20 0%, #2d3436 100%);
+    --component-bg: #2d3436;
+    --text-color: #f8f9fa;
+    --input-bg: #1a1c20;
+    --input-text: #f8f9fa;
+    --shadow: 0 8px 24px rgba(0,0,0,0.2);
 }
 
 * {
@@ -20,11 +35,33 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--bg-gradient);
     min-height: 100vh;
     padding: 2rem;
-    color: var(--dark);
+    color: var(--text-color);
     line-height: 1.6;
+}
+
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
 }
 
 .container {
@@ -68,7 +105,8 @@ h1 {
 }
 
 .input-section {
-    background: white;
+    background: var(--component-bg);
+    color: var(--text-color);
     padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
@@ -91,6 +129,8 @@ textarea {
     font-size: 1rem;
     transition: var(--transition);
     margin-bottom: 1rem;
+    background: var(--input-bg);
+    color: var(--input-text);
 }
 
 textarea:focus {
@@ -153,7 +193,8 @@ button i {
 }
 
 .pomodoro-section {
-    background: white;
+    background: var(--component-bg);
+    color: var(--text-color);
     padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
@@ -190,7 +231,7 @@ button i {
     font-size: 4rem;
     font-weight: 600;
     margin: 1.5rem 0;
-    color: var(--dark);
+    color: var(--text-color);
     font-family: 'Courier New', monospace;
     letter-spacing: 2px;
 }
@@ -229,7 +270,8 @@ button i {
 }
 
 .column {
-    background: white;
+    background: var(--component-bg);
+    color: var(--text-color);
     border-radius: var(--border-radius);
     padding: 1.5rem;
     box-shadow: var(--shadow);
@@ -244,7 +286,7 @@ button i {
 .column h2 {
     text-align: center;
     margin-bottom: 1.5rem;
-    color: var(--dark);
+    color: var(--primary);
     font-weight: 500;
     position: relative;
     padding-bottom: 0.75rem;
@@ -269,7 +311,8 @@ button i {
 }
 
 .task {
-    background: white;
+    background: var(--component-bg);
+    color: var(--text-color);
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 8px;
