@@ -1,13 +1,12 @@
 import { sendTimerUpdate } from './websocket.js';
 
 const timerDisplay = document.getElementById('timer');
-const startBtn = document.getElementById('startPomodoro');
-const stopBtn = document.getElementById('stopPomodoro');
-const resetBtn = document.getElementById('resetPomodoro');
+const pomodoroToggle = document.getElementById('pomodoroToggle');
 const progressBar = document.getElementById('progressBar');
 const currentTaskDisplay = document.getElementById('currentTaskDisplay');
 
 const totalTime = 25 * 60;
+let isRunning = false;
 
 function updateTimerDisplay(timeLeft) {
     const minutes = Math.floor(timeLeft / 60);
@@ -77,31 +76,30 @@ function handlePomodoroComplete() {
     }
 }
 
-function startTimer() {
-    console.log('Start timer clicked');
-    sendTimerUpdate({
-        timeLeft: totalTime,
-        isRunning: true,
-        elapsedTime: 0,
-        lastUpdate: Date.now() / 1000
-    });
-}
-
-function stopTimer() {
-    console.log('Stop timer clicked');
-    sendTimerUpdate({
-        isRunning: false
-    });
-}
-
-function resetTimer() {
-    console.log('Reset timer clicked');
-    sendTimerUpdate({
-        timeLeft: totalTime,
-        isRunning: false,
-        elapsedTime: 0,
-        lastUpdate: Date.now() / 1000
-    });
+function toggleTimer() {
+    isRunning = !isRunning;
+    if (isRunning) {
+        // Start the timer
+        pomodoroToggle.innerHTML = '<i class="fas fa-stop"></i> Stop';
+        sendTimerUpdate({
+            timeLeft: totalTime,
+            isRunning: true,
+            elapsedTime: 0,
+            lastUpdate: Date.now() / 1000
+        });
+    } else {
+        // Stop and reset the timer
+        pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
+        sendTimerUpdate({
+            timeLeft: totalTime,
+            isRunning: false,
+            elapsedTime: 0,
+            lastUpdate: Date.now() / 1000
+        });
+        updateTimerDisplay(totalTime);
+        updateProgressBar(0);
+        createConfetti(); // Show confetti when stopping the timer
+    }
 }
 
 function updateTimerState(timerState) {
@@ -111,15 +109,23 @@ function updateTimerState(timerState) {
     updateTimerDisplay(timerState.timeLeft);
     updateProgressBar(timerState.elapsedTime);
     
+    // Update button state based on timer state
+    if (timerState.isRunning !== isRunning) {
+        isRunning = timerState.isRunning;
+        pomodoroToggle.innerHTML = isRunning ? 
+            '<i class="fas fa-stop"></i> Stop' : 
+            '<i class="fas fa-play"></i> Start';
+    }
+    
     if (timerState.timeLeft <= 0 && !timerState.isRunning) {
         handlePomodoroComplete();
+        isRunning = false;
+        pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
     }
 }
 
-// Event listeners
-startBtn.addEventListener('click', startTimer);
-stopBtn.addEventListener('click', stopTimer);
-resetBtn.addEventListener('click', resetTimer);
+// Event listener
+pomodoroToggle.addEventListener('click', toggleTimer);
 
 // Initialize timer display
 updateTimerDisplay(totalTime);
