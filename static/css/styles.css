@@ -1,0 +1,396 @@
+:root {
+    --primary: #6c5ce7;
+    --primary-light: #a29bfe;
+    --secondary: #00b894;
+    --danger: #ff7675;
+    --warning: #fdcb6e;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --gray: #adb5bd;
+    --border-radius: 12px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.1);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 2rem;
+    color: var(--dark);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 2.5rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+.connection-status {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.connected {
+    color: var(--secondary);
+}
+
+.disconnected {
+    color: var(--danger);
+}
+
+.room-info {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    background: rgba(108, 92, 231, 0.1);
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    display: inline-block;
+    margin-left: 50%;
+    transform: translateX(-50%);
+}
+
+.input-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    transition: var(--transition);
+}
+
+.input-section:hover {
+    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 1rem;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius);
+    resize: vertical;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: var(--transition);
+    margin-bottom: 1rem;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+button i {
+    font-size: 1.1rem;
+}
+
+#loadTasks {
+    background-color: var(--primary);
+    color: white;
+}
+
+#loadTasks:hover {
+    background-color: #5649c0;
+    transform: translateY(-2px);
+}
+
+.danger {
+    background-color: var(--danger);
+    color: white;
+}
+
+.danger:hover {
+    background-color: #e17070;
+    transform: translateY(-2px);
+}
+
+.timer-btn {
+    background-color: var(--secondary);
+    color: white;
+}
+
+.timer-btn:hover {
+    background-color: #00a884;
+    transform: translateY(-2px);
+}
+
+.pomodoro-section {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    text-align: center;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.pomodoro-section:hover {
+    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.pomodoro-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+.current-task {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    min-height: 2rem;
+}
+
+.pomodoro-timer {
+    font-size: 4rem;
+    font-weight: 600;
+    margin: 1.5rem 0;
+    color: var(--dark);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+}
+
+.pomodoro-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.progress-container {
+    width: 100%;
+    height: 12px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-light), var(--primary));
+    border-radius: 6px;
+    width: 0%;
+    transition: width 1s linear;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.column {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.column:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.column h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--dark);
+    font-weight: 500;
+    position: relative;
+    padding-bottom: 0.75rem;
+}
+
+.column h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 3px;
+}
+
+.tasks {
+    min-height: 150px;
+    padding: 0.5rem;
+    transition: var(--transition);
+}
+
+.task {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    cursor: move;
+    border-left: 4px solid var(--primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.task::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(108, 92, 231, 0.1), transparent);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.task:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.task:hover::after {
+    opacity: 1;
+}
+
+#currentPomodoroColumn {
+    background-color: rgba(253, 203, 110, 0.1);
+    border: 1px dashed var(--warning);
+}
+
+.task.highlighted {
+    background-color: rgba(253, 203, 110, 0.2);
+    border-left: 4px solid var(--warning);
+}
+
+.column.highlight {
+    background-color: rgba(108, 92, 231, 0.05);
+}
+
+.column.drag-over {
+    background-color: rgba(108, 92, 231, 0.05);
+    transition: background-color 0.2s ease;
+}
+
+.task.drag-over {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(108, 92, 231, 0.3);
+    transition: all 0.2s ease;
+}
+
+.task-placeholder {
+    background-color: rgba(108, 92, 231, 0.1);
+    border: 2px dashed var(--primary);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    height: 60px;
+    transition: opacity 0.2s ease;
+    opacity: 1;
+}
+
+.dragging {
+    opacity: 0.8;
+    transform: scale(1.02) rotate(1deg);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--gray);
+    padding: 2rem 0;
+    font-style: italic;
+}
+
+.task.dragging-over {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(108, 92, 231, 0.3);
+}
+
+.task-ghost {
+    opacity: 0.8;
+    transform: scale(1.02) rotate(2deg);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+    
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+    
+    .pomodoro-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@keyframes confetti {
+    0% { transform: translateY(0) rotate(0); opacity: 1; }
+    100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+}
+
+.confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: var(--primary);
+    animation: confetti 3s ease-out forwards;
+    z-index: 1000;
+}

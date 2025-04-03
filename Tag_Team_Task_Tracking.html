@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag-Team Task Tracking</title>
+    <link rel="stylesheet" href="./static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script type="module">
+        import { connectWebSocket } from './static/js/websocket.js';
+        import { initializeBoard, updateBoard } from './static/js/kanban.js';
+        import { updateTimerState } from './static/js/pomodoro.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            connectWebSocket();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-tasks"></i> Tag-Team Task Tracking</h1>
+        
+        <div class="connection-status">
+            <span id="connectionStatus" class="disconnected"><i class="fas fa-circle"></i> Disconnected</span>
+        </div>
+        
+        <div class="room-info" id="roomInfo">
+            Room: default
+        </div>
+        
+        <div class="input-section">
+            <textarea id="taskInput" placeholder="Enter your tasks here, one per line..."></textarea>
+            <div class="button-group">
+                <button id="loadTasks"><i class="fas fa-plus-circle"></i> Load Tasks</button>
+                <button id="clearStorage" class="danger"><i class="fas fa-trash-alt"></i> Clear All</button>
+            </div>
+        </div>
+        
+        <div class="pomodoro-section">
+            <div class="current-task" id="currentTaskDisplay"><i class="fas fa-clock"></i> No task selected</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+            </div>
+            <div class="pomodoro-timer" id="timer">25:00</div>
+            <div class="pomodoro-controls">
+                <button id="startPomodoro" class="timer-btn"><i class="fas fa-play"></i> Start</button>
+                <button id="stopPomodoro" class="timer-btn"><i class="fas fa-pause"></i> Pause</button>
+                <button id="resetPomodoro" class="timer-btn"><i class="fas fa-redo"></i> Reset</button>
+            </div>
+        </div>
+        
+        <div class="kanban-board">
+            <div class="column" id="todoColumn">
+                <h2><i class="fas fa-clipboard-list"></i> Todo</h2>
+                <div id="todoTasks" class="tasks">
+                    <div class="empty-state">Add tasks to get started</div>
+                </div>
+            </div>
+            
+            <div class="column" id="inProgressColumn">
+                <h2><i class="fas fa-spinner"></i> In Progress</h2>
+                <div id="inProgressTasks" class="tasks">
+                    <div class="empty-state">Tasks being worked on</div>
+                </div>
+            </div>
+            
+            <div class="column" id="doneColumn">
+                <h2><i class="fas fa-check-circle"></i> Done</h2>
+                <div id="doneTasks" class="tasks">
+                    <div class="empty-state">Completed tasks</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { connectWebSocket } from './static/js/websocket.js';
+        import { initializeBoard, updateBoard } from './static/js/kanban.js';
+        import { updateTimerState } from './static/js/pomodoro.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            connectWebSocket();
+        });
+    </script>
+</body>
+</html>
