@@ -8,7 +8,7 @@ import time
 # Store connected clients and board state
 clients = defaultdict(set)
 board_state = {
-    'todo': [],
+    'todo': [],  # each task now has {id, text, details}
     'inProgress': [],
     'done': [],
     'taskIdCounter': 0,

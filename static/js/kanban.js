@@ -9,6 +9,29 @@ const loadTasksBtn = document.getElementById('loadTasks');
 const clearStorageBtn = document.getElementById('clearStorage');
 const currentTaskDisplay = document.getElementById('currentTaskDisplay');
 
+let currentEditingTask = null;
+let taskEditModal, taskDetailInput, closeModalBtn, saveTaskDetailsBtn;
+
+document.addEventListener('DOMContentLoaded', () => {
+    taskEditModal = document.getElementById('taskEditModal');
+    taskDetailInput = document.getElementById('taskDetailInput');
+    closeModalBtn = document.querySelector('.close-modal');
+    saveTaskDetailsBtn = document.getElementById('saveTaskDetails');
+
+    // Event listeners for modal
+    closeModalBtn.addEventListener('click', closeEditModal);
+    saveTaskDetailsBtn.addEventListener('click', saveTaskDetails);
+
+    window.addEventListener('click', (e) => {
+        if (e.target === taskEditModal) {
+            closeEditModal();
+        }
+    });
+
+    // Initialize drag and drop
+    setupDragAndDrop();
+});
+
 function initializeBoard(state) {
     resetColumn(todoTasks, 'Add tasks to get started');
     resetColumn(inProgressTasks, 'Drag a task here');
@@ -52,11 +75,8 @@ function loadTasksToColumn(columnElement, tasks) {
     }
     
     tasks.forEach(task => {
-        const taskElement = document.createElement('div');
-        taskElement.className = 'task';
-        taskElement.textContent = task.text;
+        const taskElement = createTaskElement(task.text, task.details);
         taskElement.id = task.id;
-        makeDraggable(taskElement);
         columnElement.appendChild(taskElement);
     });
 }
@@ -242,10 +262,16 @@ function handleDrop(e) {
 
 function getTaskData(container) {
     const tasks = Array.from(container.children).filter(el => !el.classList.contains('empty-state'));
-    return tasks.map(task => ({
-        id: task.id,
-        text: task.textContent
-    }));
+    return tasks.map(task => {
+        const content = task.querySelector('.task-content');
+        const title = content.querySelector('.task-title');
+        const details = content.querySelector('.task-details');
+        return {
+            id: task.id,
+            text: title.textContent,
+            details: details ? details.textContent : ''
+        };
+    });
 }
 
 // Event listeners
@@ -283,17 +309,85 @@ clearStorageBtn.addEventListener('click', function() {
     }
 });
 
-function createTaskElement(taskText) {
+function createTaskElement(taskText, details = '') {
     const taskElement = document.createElement('div');
     taskElement.className = 'task';
-    taskElement.textContent = taskText;
     taskElement.id = 'task-' + taskIdCounter++;
+
+    // Edit button (first)
+    const editButton = document.createElement('button');
+    editButton.className = 'edit-task-btn';
+    editButton.innerHTML = '<i class="fas fa-edit"></i>';
+    editButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(taskElement);
+    });
+
+    // Task content (second)
+    const taskContent = document.createElement('div');
+    taskContent.className = 'task-content';
+    
+    // Main task text
+    const taskTitle = document.createElement('div');
+    taskTitle.className = 'task-title';
+    taskTitle.textContent = taskText;
+    taskContent.appendChild(taskTitle);
+    
+    // Task details (if any)
+    if (details) {
+        const taskDetails = document.createElement('div');
+        taskDetails.className = 'task-details';
+        taskDetails.textContent = details;
+        taskContent.appendChild(taskDetails);
+    }
+
+    taskElement.appendChild(editButton);
+    taskElement.appendChild(taskContent);
     makeDraggable(taskElement);
     return taskElement;
 }
 
-// Initialize drag and drop
-setupDragAndDrop();
+function openEditModal(taskElement) {
+    console.log('Opening modal for task:', taskElement);
+    currentEditingTask = taskElement;
+    const taskContent = taskElement.querySelector('.task-content');
+    const taskDetails = taskContent.querySelector('.task-details');
+    taskDetailInput.value = taskDetails ? taskDetails.textContent : '';
+    
+    const modal = document.getElementById('taskEditModal');
+    console.log('Modal element:', modal);
+    if (modal) {
+        modal.style.display = 'block';
+    } else {
+        console.error('Modal element not found!');
+    }
+}
+
+function closeEditModal() {
+    taskEditModal.style.display = 'none';
+    currentEditingTask = null;
+}
+
+function saveTaskDetails() {
+    if (!currentEditingTask) return;
+    
+    const taskContent = currentEditingTask.querySelector('.task-content');
+    let taskDetails = taskContent.querySelector('.task-details');
+    
+    if (taskDetailInput.value.trim()) {
+        if (!taskDetails) {
+            taskDetails = document.createElement('div');
+            taskDetails.className = 'task-details';
+            taskContent.appendChild(taskDetails);
+        }
+        taskDetails.textContent = taskDetailInput.value.trim();
+    } else if (taskDetails) {
+        taskContent.removeChild(taskDetails);
+    }
+    
+    closeEditModal();
+    sendUpdate();
+}
 
 // Export functions for use in other modules
 export { 
