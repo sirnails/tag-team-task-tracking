@@ -314,16 +314,7 @@ function createTaskElement(taskText, details = '') {
     taskElement.className = 'task';
     taskElement.id = 'task-' + taskIdCounter++;
 
-    // Edit button (first)
-    const editButton = document.createElement('button');
-    editButton.className = 'edit-task-btn';
-    editButton.innerHTML = '<i class="fas fa-edit"></i>';
-    editButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(taskElement);
-    });
-
-    // Task content (second)
+    // Task content
     const taskContent = document.createElement('div');
     taskContent.className = 'task-content';
     
@@ -341,8 +332,16 @@ function createTaskElement(taskText, details = '') {
         taskContent.appendChild(taskDetails);
     }
 
-    taskElement.appendChild(editButton);
     taskElement.appendChild(taskContent);
+
+    // Add click handler for editing
+    taskElement.addEventListener('click', (e) => {
+        // Only open edit modal if we're not dragging
+        if (!taskElement.classList.contains('dragging')) {
+            openEditModal(taskElement);
+        }
+    });
+
     makeDraggable(taskElement);
     return taskElement;
 }
