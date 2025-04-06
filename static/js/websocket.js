@@ -31,9 +31,6 @@ function connectWebSocket() {
                 console.log('Handling full update:', data.data);
                 initializeBoard(data.data.board);
                 updateTimerState(data.data.timer);
-                if (data.data.currentTask) {
-                    currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${data.data.currentTask.text}`;
-                }
                 break;
             case 'update':
                 console.log('Handling board update:', data.data);
@@ -71,8 +68,10 @@ function sendUpdate() {
                 taskIdCounter: taskIdCounter,
                 currentTask: inProgressTasks.children.length > 0 && 
                         !inProgressTasks.firstChild.classList.contains('empty-state') ? 
-                        { id: inProgressTasks.firstChild.id, 
-                            text: inProgressTasks.firstChild.textContent } : null
+                        { 
+                            id: inProgressTasks.firstChild.id, 
+                            text: inProgressTasks.firstChild.querySelector('.task-title').textContent 
+                        } : null
             }
         };
         console.log('Sending board update:', updateData);

@@ -44,7 +44,11 @@ function initializeBoard(state) {
     taskIdCounter = state.taskIdCounter || 0;
     
     if (state.inProgress && state.inProgress.length > 0) {
-        currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${state.inProgress[0].text}`;
+        const taskElement = document.getElementById(state.inProgress[0].id);
+        if (taskElement) {
+            const taskTitle = taskElement.querySelector('.task-title').textContent;
+            currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
+        }
     }
 }
 
@@ -55,7 +59,11 @@ function updateBoard(state) {
     taskIdCounter = state.taskIdCounter || 0;
     
     if (state.currentTask) {
-        currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${state.currentTask.text}`;
+        const taskElement = document.getElementById(state.currentTask.id);
+        if (taskElement) {
+            const taskTitle = taskElement.querySelector('.task-title').textContent;
+            currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
+        }
     } else {
         currentTaskDisplay.innerHTML = '<i class="fas fa-clock"></i> No task selected';
     }
@@ -251,7 +259,8 @@ function handleDrop(e) {
     }
     
     if (column.id === 'inProgressTasks') {
-        currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskElement.textContent}`;
+        const taskTitle = taskElement.querySelector('.task-title').textContent;
+        currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
     } else if (taskElement.parentElement.id !== 'inProgressTasks' && 
                document.getElementById('inProgressTasks').children.length === 0) {
         currentTaskDisplay.innerHTML = '<i class="fas fa-clock"></i> No task selected';
