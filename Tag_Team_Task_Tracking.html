@@ -38,8 +38,11 @@
                 <div class="connection-status">
                     <span id="connectionStatus" class="disconnected"><i class="fas fa-circle"></i> Disconnected</span>
                 </div>
-                <div class="room-info" id="roomInfo">
-                    Room: default
+                <div class="room-switcher">
+                    <select id="roomSelect" class="room-select">
+                        <option value="default">Default Room</option>
+                    </select>
+                    <button id="newRoomBtn" class="room-btn"><i class="fas fa-plus"></i></button>
                 </div>
                 <button id="themeToggle" class="theme-toggle">
                     <i class="fas fa-sun"></i>

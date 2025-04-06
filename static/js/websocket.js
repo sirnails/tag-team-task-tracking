@@ -7,38 +7,63 @@ const currentTaskDisplay = document.getElementById('currentTaskDisplay');
 const todoTasks = document.getElementById('todoTasks');
 const inProgressTasks = document.getElementById('inProgressTasks');
 const doneTasks = document.getElementById('doneTasks');
-const roomId = window.location.search.split('room=')[1] || 'default';
-const roomInfo = document.getElementById('roomInfo');
+const roomSelect = document.getElementById('roomSelect');
+const newRoomBtn = document.getElementById('newRoomBtn');
+
+let currentRoomId = window.location.search.split('room=')[1] || 'default';
+
+function updateRoomSelect(rooms) {
+    // Clear existing options except default
+    while (roomSelect.options.length > 0) {
+        roomSelect.remove(0);
+    }
+    
+    // Add default room first
+    roomSelect.add(new Option('Default Room', 'default'));
+    
+    // Add available rooms
+    rooms.sort().forEach(room => {
+        if (room !== 'default') {
+            const option = new Option(room, room);
+            roomSelect.add(option);
+        }
+    });
+    
+    // Select current room
+    roomSelect.value = currentRoomId;
+}
+
+function switchRoom(newRoom) {
+    if (newRoom === currentRoomId) return;
+    
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('room', newRoom);
+    window.history.pushState({}, '', newUrl);
+    
+    currentRoomId = newRoom;
+    
+    // Reconnect websocket for new room
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+    }
+    connectWebSocket();
+}
 
 function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = 'localhost:8080';
-    const wsUrl = `${protocol}//${host}/ws?room=${roomId}`;
+    const wsUrl = `${protocol}//${host}/ws?room=${currentRoomId}`;
     console.log('Attempting to connect to WebSocket at:', wsUrl);
     
-    // Update room info in UI
-    roomInfo.innerHTML = `Room: ${roomId} <button id="copyRoomLink" class="room-link-btn"><i class="fas fa-link"></i></button>`;
-    
-    // Add copy link functionality
-    const copyBtn = document.getElementById('copyRoomLink');
-    copyBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const roomUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
-        navigator.clipboard.writeText(roomUrl).then(() => {
-            const originalHtml = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHtml;
-            }, 2000);
-        });
-    });
-
     socket = new WebSocket(wsUrl);
     
     socket.onopen = () => {
         console.log('Connected to WebSocket server');
         connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Connected';
         connectionStatus.className = 'connected';
+        
+        // Request available rooms
+        socket.send(JSON.stringify({ type: 'get_rooms' }));
     };
     
     socket.onmessage = (event) => {
@@ -58,6 +83,10 @@ function connectWebSocket() {
                 console.log('Handling timer update:', data.data);
                 updateTimerState(data.data);
                 break;
+            case 'rooms':
+                console.log('Handling rooms update:', data.rooms);
+                updateRoomSelect(data.rooms);
+                break;
         }
     };
     
@@ -74,6 +103,21 @@ function connectWebSocket() {
         connectionStatus.className = 'disconnected';
     };
 }
+
+// Event listeners for room switching
+roomSelect.addEventListener('change', (e) => {
+    switchRoom(e.target.value);
+});
+
+newRoomBtn.addEventListener('click', () => {
+    const roomName = prompt('Enter new room name:');
+    if (roomName && roomName.trim()) {
+        const sanitizedName = roomName.trim().replace(/[^a-zA-Z0-9-_]/g, '-');
+        if (sanitizedName) {
+            switchRoom(sanitizedName);
+        }
+    }
+});
 
 function sendUpdate() {
     if (socket && socket.readyState === WebSocket.OPEN) {

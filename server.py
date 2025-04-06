@@ -103,6 +103,22 @@ async def update_timer():
             print(f"Timer update error: {e}")
             await asyncio.sleep(1)
 
+async def broadcast_room_list():
+    room_list = sorted(list(set(['default'] + list(rooms_state.keys()))))  # Ensure default is included and remove duplicates
+    room_data = {
+        'type': 'rooms',
+        'rooms': room_list
+    }
+    
+    # Broadcast to all clients in all rooms
+    for room in list(clients.keys()):  # Create a list to avoid runtime modification issues
+        for client in list(clients[room]):  # Create a list to avoid runtime modification issues
+            if not client.closed:
+                try:
+                    await client.send_json(room_data)
+                except Exception as e:
+                    print(f"Error broadcasting room list: {e}")
+
 async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -131,10 +147,16 @@ async def websocket_handler(request):
             }
         })
         
+        # Broadcast updated room list to all clients
+        await broadcast_room_list()
+        
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:
                 data = json.loads(msg.data)
-                if data['type'] == 'update':
+                if data['type'] == 'get_rooms':
+                    # Send room list to all clients
+                    await broadcast_room_list()
+                elif data['type'] == 'update':
                     # Update board state
                     if 'todo' in data['data']:
                         room_state['todo'] = data['data']['todo']
@@ -178,9 +200,10 @@ async def websocket_handler(request):
     finally:
         clients[room].discard(ws)
         if not clients[room]:  # If this was the last client in the room
-            # Don't delete the room state anymore, just keep it persisted
             print(f"Last client left room {room}")
         await ws.close()
+        # Broadcast updated room list
+        await broadcast_room_list()
     return ws
 
 async def index_handler(request):
