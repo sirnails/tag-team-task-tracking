@@ -644,6 +644,40 @@ button i {
     transition: var(--transition);
 }
 
+.trash-column::before {
+    content: "Drop card here to delete";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--danger-pastel);
+    font-size: 1.2rem;
+    font-weight: 500;
+    opacity: 0.8;
+    text-align: center;
+    pointer-events: none;
+    z-index: 1003;
+    display: block !important;
+}
+
+.trash-column.visible::before {
+    display: block !important;
+}
+
+.trash-column.drag-over::before {
+    color: var(--text-color);
+}
+
+.trash-column.drag-over h2,
+.trash-column.drag-over .tasks {
+    background: var(--danger-pastel);
+    color: var(--text-color);
+}
+
+.trash-column:hover {
+    opacity: 1 !important;
+}
+
 .trash-column.visible {
     display: flex;
     opacity: 1;
@@ -661,33 +695,6 @@ button i {
 .trash-column.drag-over .tasks {
     background: var(--danger-pastel);
     color: var(--text-color);
-}
-
-.trash-column::before {
-    display: none;
-}
-
-.trash-column:hover {
-    opacity: 1 !important;
-}
-
-.trash-column h2 {
-    background-color: inherit;
-    position: relative;
-    z-index: 1002;
-    transition: var(--transition);
-}
-
-.trash-column .tasks {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: calc(100% - 4rem);
-    text-align: center;
-    background: inherit;
-    position: relative;
-    z-index: 1002;
-    transition: var(--transition);
 }
 
 #trashColumn .task-placeholder {
