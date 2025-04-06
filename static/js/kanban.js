@@ -17,10 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
     taskDetailInput = document.getElementById('taskDetailInput');
     closeModalBtn = document.querySelector('.close-modal');
     saveTaskDetailsBtn = document.getElementById('saveTaskDetails');
+    const cancelTaskDetailsBtn = document.getElementById('cancelTaskDetails');
 
     // Event listeners for modal
     closeModalBtn.addEventListener('click', closeEditModal);
     saveTaskDetailsBtn.addEventListener('click', saveTaskDetails);
+    cancelTaskDetailsBtn.addEventListener('click', closeEditModal);
 
     window.addEventListener('click', (e) => {
         if (e.target === taskEditModal) {
