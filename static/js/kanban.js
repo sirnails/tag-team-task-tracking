@@ -419,13 +419,10 @@ function setupTrashColumn() {
     const trashColumn = document.getElementById('trashColumn');
     const trashTasks = document.getElementById('trashTasks');
     const trashEmptyState = trashTasks.querySelector('.empty-state');
-
-    // Create a placeholder element that will be shown when dragging
-    const placeholder = document.createElement('div');
-    placeholder.className = 'task-placeholder';
-    trashTasks.appendChild(placeholder);
+    let isDragging = false;
 
     document.addEventListener('dragstart', () => {
+        isDragging = true;
         trashColumn.classList.add('visible');
         if (trashEmptyState) {
             trashEmptyState.textContent = 'Drop here to delete';
@@ -433,26 +430,36 @@ function setupTrashColumn() {
     });
 
     document.addEventListener('dragend', () => {
-        trashColumn.classList.remove('visible', 'drag-over');
-        if (trashEmptyState) {
-            trashEmptyState.textContent = 'Drop here to delete';
+        isDragging = false;
+        if (!trashColumn.matches(':hover')) {
+            setTimeout(() => {
+                if (!trashColumn.matches(':hover')) {
+                    trashColumn.classList.remove('visible', 'drag-over');
+                }
+            }, 100);
         }
     });
 
     trashTasks.addEventListener('dragenter', (e) => {
         e.preventDefault();
-        trashColumn.classList.add('drag-over');
-        if (trashEmptyState) {
-            trashEmptyState.textContent = 'Release to delete';
-        }
+        trashColumn.classList.add('visible', 'drag-over');
     });
 
     trashTasks.addEventListener('dragleave', (e) => {
         if (!e.relatedTarget || !trashTasks.contains(e.relatedTarget)) {
             trashColumn.classList.remove('drag-over');
-            if (trashEmptyState) {
-                trashEmptyState.textContent = 'Drop here to delete';
-            }
+        }
+    });
+
+    trashTasks.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        trashColumn.classList.add('visible', 'drag-over');
+    });
+
+    // Keep trash visible during hover
+    trashColumn.addEventListener('mouseenter', () => {
+        if (isDragging) {
+            trashColumn.classList.add('visible');
         }
     });
 
@@ -491,11 +498,6 @@ function setupTrashColumn() {
         
         // Reset trash column state
         trashColumn.classList.remove('drag-over');
-    });
-
-    trashTasks.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        trashColumn.classList.add('drag-over');
     });
 }
 
