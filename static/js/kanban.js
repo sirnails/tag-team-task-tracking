@@ -417,20 +417,46 @@ function saveTaskDetails() {
 
 function setupTrashColumn() {
     const trashColumn = document.getElementById('trashColumn');
-    const tasks = document.querySelectorAll('.task');
+    const trashTasks = document.getElementById('trashTasks');
+    const trashEmptyState = trashTasks.querySelector('.empty-state');
 
-    // Show trash column when dragging starts
+    // Create a placeholder element that will be shown when dragging
+    const placeholder = document.createElement('div');
+    placeholder.className = 'task-placeholder';
+    trashTasks.appendChild(placeholder);
+
     document.addEventListener('dragstart', () => {
         trashColumn.classList.add('visible');
+        if (trashEmptyState) {
+            trashEmptyState.textContent = 'Drop here to delete';
+        }
     });
 
-    // Hide trash column when dragging ends
     document.addEventListener('dragend', () => {
         trashColumn.classList.remove('visible', 'drag-over');
+        if (trashEmptyState) {
+            trashEmptyState.textContent = 'Drop here to delete';
+        }
+    });
+
+    trashTasks.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        trashColumn.classList.add('drag-over');
+        if (trashEmptyState) {
+            trashEmptyState.textContent = 'Release to delete';
+        }
+    });
+
+    trashTasks.addEventListener('dragleave', (e) => {
+        if (!e.relatedTarget || !trashTasks.contains(e.relatedTarget)) {
+            trashColumn.classList.remove('drag-over');
+            if (trashEmptyState) {
+                trashEmptyState.textContent = 'Drop here to delete';
+            }
+        }
     });
 
     // Prevent the trash column from adding tasks back to the board
-    const trashTasks = document.getElementById('trashTasks');
     trashTasks.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -470,10 +496,6 @@ function setupTrashColumn() {
     trashTasks.addEventListener('dragover', (e) => {
         e.preventDefault();
         trashColumn.classList.add('drag-over');
-    });
-
-    trashTasks.addEventListener('dragleave', () => {
-        trashColumn.classList.remove('drag-over');
     });
 }
 
