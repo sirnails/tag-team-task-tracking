@@ -720,3 +720,30 @@ button i {
         opacity: 0.6;
     }
 }
+
+.room-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+}
+
+.room-link-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.room-link-btn:hover {
+    background: rgba(108, 92, 231, 0.1);
+    transform: scale(1.1);
+}

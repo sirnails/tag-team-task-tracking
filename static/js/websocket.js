@@ -8,6 +8,7 @@ const todoTasks = document.getElementById('todoTasks');
 const inProgressTasks = document.getElementById('inProgressTasks');
 const doneTasks = document.getElementById('doneTasks');
 const roomId = window.location.search.split('room=')[1] || 'default';
+const roomInfo = document.getElementById('roomInfo');
 
 function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -15,6 +16,23 @@ function connectWebSocket() {
     const wsUrl = `${protocol}//${host}/ws?room=${roomId}`;
     console.log('Attempting to connect to WebSocket at:', wsUrl);
     
+    // Update room info in UI
+    roomInfo.innerHTML = `Room: ${roomId} <button id="copyRoomLink" class="room-link-btn"><i class="fas fa-link"></i></button>`;
+    
+    // Add copy link functionality
+    const copyBtn = document.getElementById('copyRoomLink');
+    copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const roomUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+        navigator.clipboard.writeText(roomUrl).then(() => {
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHtml;
+            }, 2000);
+        });
+    });
+
     socket = new WebSocket(wsUrl);
     
     socket.onopen = () => {
