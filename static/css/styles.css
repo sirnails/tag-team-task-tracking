@@ -659,7 +659,7 @@ button i {
 }
 
 .trash-column {
-    display: flex; /* Always visible now */
+    display: none; /* Hidden by default */
     background: var(--component-bg);
     border: 2px dashed var(--danger);
     width: auto;
@@ -668,8 +668,8 @@ button i {
     height: 300px; /* Match height with other boxes */
 }
 
-.trash-column h2 {
-    color: var(--danger);
+.trash-column.visible {
+    display: flex; /* Show when class 'visible' is added */
 }
 
 .trash-column::before {
@@ -679,4 +679,13 @@ button i {
 .trash-column.drag-over {
     background: rgba(255, 118, 117, 0.1);
     transform: scale(1.02);
+}
+
+.input-section {
+    display: flex;
+}
+
+/* Hide input section when dragging */
+.input-section.hidden {
+    display: none;
 }

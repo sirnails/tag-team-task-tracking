@@ -109,6 +109,19 @@ function resetColumn(column, emptyText) {
     column.appendChild(emptyDiv);
 }
 
+function toggleDragInterface(isDragging) {
+    const trashColumn = document.getElementById('trashColumn');
+    const inputSection = document.querySelector('.input-section');
+    
+    if (isDragging) {
+        trashColumn.classList.add('visible');
+        inputSection.classList.add('hidden');
+    } else {
+        trashColumn.classList.remove('visible');
+        inputSection.classList.remove('hidden');
+    }
+}
+
 function makeDraggable(taskElement) {
     taskElement.draggable = true;
     
@@ -120,6 +133,7 @@ function makeDraggable(taskElement) {
         
         e.dataTransfer.setData('text/plain', this.id);
         this.classList.add('dragging');
+        toggleDragInterface(true);
         
         const ghost = this.cloneNode(true);
         ghost.classList.add('task-ghost');
@@ -140,6 +154,7 @@ function makeDraggable(taskElement) {
         this.classList.remove('dragging');
         document.querySelectorAll('.task-placeholder').forEach(placeholder => placeholder.remove());
         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        toggleDragInterface(false);
     });
 }
 
