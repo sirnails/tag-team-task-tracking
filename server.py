@@ -65,12 +65,21 @@ async def websocket_handler(request):
     
     try:
         # Send FULL current state to new client
+        if board_state['inProgress'] and len(board_state['inProgress']) > 0:
+            current_task = board_state['inProgress'][0]
+            current_task_data = {
+                'id': current_task['id'],
+                'text': current_task['text'].split('\n')[0] if '\n' in current_task['text'] else current_task['text']  # Only take first line as title
+            }
+        else:
+            current_task_data = None
+            
         await ws.send_json({
             'type': 'full_update',
             'data': {
                 'board': board_state,
                 'timer': board_state['timer'],
-                'currentTask': board_state['currentTask']
+                'currentTask': current_task_data
             }
         })
         
