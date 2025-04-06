@@ -31,6 +31,18 @@ function updateRoomSelect(rooms) {
     
     // Select current room
     roomSelect.value = currentRoomId;
+
+    // Update delete button visibility
+    const deleteBtn = document.getElementById('deleteRoomBtn') || document.createElement('button');
+    deleteBtn.id = 'deleteRoomBtn';
+    deleteBtn.className = 'room-btn delete-room-btn';
+    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteBtn.style.display = currentRoomId === 'default' ? 'none' : 'inline-block';
+    deleteBtn.title = 'Delete Room';
+    
+    if (!deleteBtn.parentElement) {
+        roomSelect.parentElement.appendChild(deleteBtn);
+    }
 }
 
 function switchRoom(newRoom) {
@@ -87,6 +99,16 @@ function connectWebSocket() {
                 console.log('Handling rooms update:', data.rooms);
                 updateRoomSelect(data.rooms);
                 break;
+            case 'delete_room_request':
+                // No longer need to ask for confirmation from other users
+                break;
+            case 'room_deleted':
+                if (data.room === currentRoomId) {
+                    alert(`Room "${data.room}" has been deleted. Moving to default room.`);
+                    switchRoom('default');
+                }
+                break;
+            // ...existing code...
         }
     };
     
@@ -118,6 +140,29 @@ newRoomBtn.addEventListener('click', () => {
         }
     }
 });
+
+// Add delete room functionality
+function requestRoomDeletion() {
+    if (currentRoomId === 'default') return;
+    
+    if (confirm(`Are you sure you want to leave and delete room "${currentRoomId}"?`)) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            // Send deletion request before switching rooms
+            socket.send(JSON.stringify({
+                type: 'delete_room_request',
+                room: currentRoomId
+            }));
+            
+            // Immediately switch to default room
+            switchRoom('default');
+        }
+    }
+}
+
+// Add confirmation dialog functionality
+function handleRoomDeletionRequest(requestingUser) {
+    return confirm(`${requestingUser} wants to delete this room. Do you agree?`);
+}
 
 function sendUpdate() {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -155,6 +200,15 @@ function sendTimerUpdate(timerState) {
         console.warn('Cannot send timer update - WebSocket is not connected');
     }
 }
+
+// Add event listener for delete button
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('#deleteRoomBtn')) {
+            requestRoomDeletion();
+        }
+    });
+});
 
 // Export functions for use in other modules
 export { connectWebSocket, sendUpdate, sendTimerUpdate };

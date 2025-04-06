@@ -790,3 +790,14 @@ button i {
     background: var(--primary-light);
     transform: scale(1.1);
 }
+
+.delete-room-btn {
+    background: var(--danger) !important;
+    color: white;
+    margin-left: 0.5rem;
+}
+
+.delete-room-btn:hover {
+    background: var(--danger-pastel) !important;
+    transform: scale(1.1);
+}

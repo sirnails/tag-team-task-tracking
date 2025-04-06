@@ -56,11 +56,53 @@ async def save_room_states():
     except Exception as e:
         print(f"Error saving room states: {e}")
 
-# Initialize rooms_state from saved data
-rooms_state = load_room_states()
-
-# Store connected clients
+# Store connected clients and room states
 clients = defaultdict(set)
+rooms_state = load_room_states()
+deleted_rooms = set()  # Track explicitly deleted rooms
+
+async def handle_room_deletion(room):
+    if room == 'default':
+        return False, "Cannot delete the default room"
+    
+    try:
+        # Mark room as deleted
+        deleted_rooms.add(room)
+        
+        # Remove room state from memory and storage
+        if room in rooms_state:
+            del rooms_state[room]
+            # Save updated states immediately
+            await save_room_states()
+        
+        # Force close all connections in the room
+        if room in clients:
+            for client in list(clients[room]):
+                if not client.closed:
+                    await client.close()
+            del clients[room]
+        
+        # Notify all remaining clients about room deletion
+        deletion_message = {
+            'type': 'room_deleted',
+            'room': room
+        }
+        
+        for client_room in list(clients.keys()):
+            for client in list(clients[client_room]):
+                if not client.closed:
+                    try:
+                        await client.send_json(deletion_message)
+                    except:
+                        pass
+        
+        # Broadcast updated room list
+        await broadcast_room_list()
+        
+        return True, None
+    except Exception as e:
+        print(f"Room deletion error: {e}")
+        return False, str(e)
 
 async def broadcast_timer_update(room):
     if not clients[room]:
@@ -104,28 +146,47 @@ async def update_timer():
             await asyncio.sleep(1)
 
 async def broadcast_room_list():
-    room_list = sorted(list(set(['default'] + list(rooms_state.keys()))))  # Ensure default is included and remove duplicates
-    room_data = {
-        'type': 'rooms',
-        'rooms': room_list
-    }
-    
-    # Broadcast to all clients in all rooms
-    for room in list(clients.keys()):  # Create a list to avoid runtime modification issues
-        for client in list(clients[room]):  # Create a list to avoid runtime modification issues
-            if not client.closed:
-                try:
-                    await client.send_json(room_data)
-                except Exception as e:
-                    print(f"Error broadcasting room list: {e}")
+    try:
+        # Only include rooms that exist in state and haven't been deleted
+        existing_rooms = set(['default'] + [
+            room for room in rooms_state.keys() 
+            if room != 'default' and room not in deleted_rooms
+        ])
+        room_list = sorted(list(existing_rooms))
+        
+        print(f"Broadcasting room list: {room_list}")  # Debug logging
+        
+        room_data = {
+            'type': 'rooms',
+            'rooms': room_list
+        }
+        
+        # Only broadcast to clients in existing rooms
+        for room in list(clients.keys()):
+            if room not in deleted_rooms:
+                for client in list(clients[room]):
+                    if not client.closed:
+                        try:
+                            await client.send_json(room_data)
+                        except Exception as e:
+                            print(f"Error sending room list to client: {e}")
+    except Exception as e:
+        print(f"Error broadcasting room list: {e}")
 
 async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     
     room = request.query.get('room', 'default')
+    
+    # Don't allow connections to deleted rooms
+    if room in deleted_rooms:
+        print(f"Rejected connection to deleted room {room}")
+        await ws.close()
+        return ws
+    
     clients[room].add(ws)
-    room_state = rooms_state[room]
+    room_state = rooms_state[room]  # This will create state if needed due to defaultdict
     
     try:
         # Send FULL current state to new client
@@ -147,15 +208,28 @@ async def websocket_handler(request):
             }
         })
         
-        # Broadcast updated room list to all clients
+        # Broadcast updated room list
         await broadcast_room_list()
         
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:
                 data = json.loads(msg.data)
-                if data['type'] == 'get_rooms':
-                    # Send room list to all clients
+                if data['type'] == 'delete_room_request':
+                    request_room = data['room']
+                    success, error = await handle_room_deletion(request_room)
+                    if not success:
+                        print(f"Room deletion failed: {error}")
+                        try:
+                            await ws.send_json({
+                                'type': 'room_deletion_failed',
+                                'message': error
+                            })
+                        except:
+                            pass
+                
+                elif data['type'] == 'get_rooms':
                     await broadcast_room_list()
+                
                 elif data['type'] == 'update':
                     # Update board state
                     if 'todo' in data['data']:
@@ -198,12 +272,14 @@ async def websocket_handler(request):
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:
+        # Clean up client connection
         clients[room].discard(ws)
-        if not clients[room]:  # If this was the last client in the room
+        if not clients[room]:
             print(f"Last client left room {room}")
         await ws.close()
-        # Broadcast updated room list
-        await broadcast_room_list()
+        # Only broadcast room list if the room wasn't deleted
+        if room not in deleted_rooms:
+            await broadcast_room_list()
     return ws
 
 async def index_handler(request):
