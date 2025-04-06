@@ -87,8 +87,8 @@ h1 {
 
 .top-section {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 1.5rem;
     margin-bottom: 1rem;
     align-items: stretch;
 }
@@ -296,7 +296,8 @@ button i {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
-    margin-top: 1rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .column {
@@ -507,6 +508,10 @@ button i {
     body {
         padding-top: 6rem;
     }
+    
+    .trash-column {
+        height: 200px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -654,13 +659,13 @@ button i {
 }
 
 .trash-column {
-    display: none;
+    display: flex; /* Always visible now */
     background: var(--component-bg);
     border: 2px dashed var(--danger);
-}
-
-.trash-column.visible {
-    display: flex;
+    width: auto;
+    min-width: 200px;
+    margin: 0;
+    height: 300px; /* Match height with other boxes */
 }
 
 .trash-column h2 {
@@ -674,16 +679,4 @@ button i {
 .trash-column.drag-over {
     background: rgba(255, 118, 117, 0.1);
     transform: scale(1.02);
-}
-
-/* Adjust grid layout to handle the trash column */
-@media (min-width: 992px) {
-    .kanban-board {
-        grid-template-columns: repeat(3, 1fr) auto;
-        gap: 1.5rem;
-    }
-
-    .trash-column {
-        width: 250px;
-    }
 }
