@@ -563,7 +563,7 @@ button i {
 .modal-content {
     background: var(--component-bg);
     margin: 15% auto;
-    padding: 1.5rem;
+    padding: 2.5rem 1.5rem 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     width: 90%;
@@ -573,7 +573,7 @@ button i {
 
 .modal-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 1rem;
 }
@@ -584,17 +584,29 @@ button i {
 }
 
 .close-modal {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
     background: none;
     border: none;
-    font-size: 1.5rem;
-    color: var(--text-color);
+    font-size: 1.75rem;
+    color: var(--gray);
     cursor: pointer;
-    padding: 0.5rem;
-    width: auto;
+    padding: 0.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 1002;
 }
 
 .close-modal:hover {
+    background: rgba(0,0,0,0.1);
     color: var(--danger);
+    transform: scale(1.1);
 }
 
 #taskDetailInput {
