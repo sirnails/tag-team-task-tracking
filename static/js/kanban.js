@@ -109,19 +109,6 @@ function resetColumn(column, emptyText) {
     column.appendChild(emptyDiv);
 }
 
-function toggleDragInterface(isDragging) {
-    const trashColumn = document.getElementById('trashColumn');
-    const inputSection = document.querySelector('.input-section');
-    
-    if (isDragging) {
-        trashColumn.classList.add('visible');
-        inputSection.classList.add('hidden');
-    } else {
-        trashColumn.classList.remove('visible');
-        inputSection.classList.remove('hidden');
-    }
-}
-
 function makeDraggable(taskElement) {
     taskElement.draggable = true;
     
@@ -133,7 +120,10 @@ function makeDraggable(taskElement) {
         
         e.dataTransfer.setData('text/plain', this.id);
         this.classList.add('dragging');
-        toggleDragInterface(true);
+        
+        // Show trash when starting to drag
+        const trashColumn = document.getElementById('trashColumn');
+        trashColumn.classList.add('visible');
         
         const ghost = this.cloneNode(true);
         ghost.classList.add('task-ghost');
@@ -154,7 +144,10 @@ function makeDraggable(taskElement) {
         this.classList.remove('dragging');
         document.querySelectorAll('.task-placeholder').forEach(placeholder => placeholder.remove());
         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-        toggleDragInterface(false);
+        
+        // Hide trash when drag ends
+        const trashColumn = document.getElementById('trashColumn');
+        trashColumn.classList.remove('visible');
     });
 }
 
@@ -419,30 +412,19 @@ function setupTrashColumn() {
     const trashColumn = document.getElementById('trashColumn');
     const trashTasks = document.getElementById('trashTasks');
     const trashEmptyState = trashTasks.querySelector('.empty-state');
-    let isDragging = false;
 
     document.addEventListener('dragstart', () => {
-        isDragging = true;
-        trashColumn.classList.add('visible');
         if (trashEmptyState) {
             trashEmptyState.textContent = 'Drop here to delete';
         }
     });
 
-    document.addEventListener('dragend', () => {
-        isDragging = false;
-        if (!trashColumn.matches(':hover')) {
-            setTimeout(() => {
-                if (!trashColumn.matches(':hover')) {
-                    trashColumn.classList.remove('visible', 'drag-over');
-                }
-            }, 100);
-        }
-    });
-
     trashTasks.addEventListener('dragenter', (e) => {
         e.preventDefault();
-        trashColumn.classList.add('visible', 'drag-over');
+        trashColumn.classList.add('drag-over');
+        // Remove any existing placeholders in the trash
+        const placeholders = trashTasks.querySelectorAll('.task-placeholder');
+        placeholders.forEach(p => p.remove());
     });
 
     trashTasks.addEventListener('dragleave', (e) => {
@@ -453,14 +435,7 @@ function setupTrashColumn() {
 
     trashTasks.addEventListener('dragover', (e) => {
         e.preventDefault();
-        trashColumn.classList.add('visible', 'drag-over');
-    });
-
-    // Keep trash visible during hover
-    trashColumn.addEventListener('mouseenter', () => {
-        if (isDragging) {
-            trashColumn.classList.add('visible');
-        }
+        trashColumn.classList.add('drag-over');
     });
 
     // Prevent the trash column from adding tasks back to the board
