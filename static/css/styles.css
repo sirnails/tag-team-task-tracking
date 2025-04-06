@@ -4,6 +4,7 @@
     --primary-light: #a29bfe;
     --secondary: #00b894;
     --danger: #ff7675;
+    --danger-pastel: #b33636;
     --warning: #fdcb6e;
     --light: #f8f9fa;
     --dark: #343a40;
@@ -631,7 +632,7 @@ button i {
     width: 100%;
     height: 100%;
     background-color: var(--component-bg);
-    border: 2px dashed var(--danger);
+    border: 2px dashed var(--danger-pastel);
     box-shadow: var(--shadow);
     margin: 0;
     opacity: 0;
@@ -650,37 +651,31 @@ button i {
 }
 
 .trash-column.drag-over {
-    background: var(--component-bg);
-    border: 2px solid var(--danger);
-    box-shadow: 0 12px 28px rgba(255, 118, 117, 0.3);
+    background: var(--danger-pastel);
+    border: 2px solid var(--danger-pastel);
+    box-shadow: 0 12px 28px rgba(255, 181, 181, 0.3);
     transform: scale(1.02);
 }
 
-.trash-column::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 118, 117, 0.1);
-    pointer-events: none;
-    transition: var(--transition);
+.trash-column.drag-over h2,
+.trash-column.drag-over .tasks {
+    background: var(--danger-pastel);
+    color: var(--text-color);
 }
 
-.trash-column.drag-over::before {
-    background: rgba(255, 118, 117, 0.2);
+.trash-column::before {
+    display: none;
 }
 
 .trash-column:hover {
     opacity: 1 !important;
-    background: var(--component-bg);
 }
 
 .trash-column h2 {
-    background-color: var(--component-bg);
+    background-color: inherit;
     position: relative;
     z-index: 1002;
+    transition: var(--transition);
 }
 
 .trash-column .tasks {
@@ -689,9 +684,10 @@ button i {
     justify-content: center;
     height: calc(100% - 4rem);
     text-align: center;
-    background: var(--component-bg);
+    background: inherit;
     position: relative;
     z-index: 1002;
+    transition: var(--transition);
 }
 
 #trashColumn .task-placeholder {
@@ -699,7 +695,7 @@ button i {
 }
 
 .trash-column.drag-over .empty-state {
-    color: var(--danger);
+    color: var(--text-color);
     font-weight: 500;
 }
 
