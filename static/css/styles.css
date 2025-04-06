@@ -652,3 +652,38 @@ button i {
     margin-top: 0.5rem;
     white-space: pre-wrap;
 }
+
+.trash-column {
+    display: none;
+    background: var(--component-bg);
+    border: 2px dashed var(--danger);
+}
+
+.trash-column.visible {
+    display: flex;
+}
+
+.trash-column h2 {
+    color: var(--danger);
+}
+
+.trash-column::before {
+    background: var(--danger);
+}
+
+.trash-column.drag-over {
+    background: rgba(255, 118, 117, 0.1);
+    transform: scale(1.02);
+}
+
+/* Adjust grid layout to handle the trash column */
+@media (min-width: 992px) {
+    .kanban-board {
+        grid-template-columns: repeat(3, 1fr) auto;
+        gap: 1.5rem;
+    }
+
+    .trash-column {
+        width: 250px;
+    }
+}

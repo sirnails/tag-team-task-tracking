@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize drag and drop
     setupDragAndDrop();
+    setupTrashColumn();
 });
 
 function initializeBoard(state) {
@@ -397,6 +398,68 @@ function saveTaskDetails() {
     
     closeEditModal();
     sendUpdate();
+}
+
+function setupTrashColumn() {
+    const trashColumn = document.getElementById('trashColumn');
+    const tasks = document.querySelectorAll('.task');
+
+    // Show trash column when dragging starts
+    document.addEventListener('dragstart', () => {
+        trashColumn.classList.add('visible');
+    });
+
+    // Hide trash column when dragging ends
+    document.addEventListener('dragend', () => {
+        trashColumn.classList.remove('visible', 'drag-over');
+    });
+
+    // Prevent the trash column from adding tasks back to the board
+    const trashTasks = document.getElementById('trashTasks');
+    trashTasks.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const taskId = e.dataTransfer.getData('text/plain');
+        const taskElement = document.getElementById(taskId);
+        
+        if (taskElement) {
+            // Remove the task
+            taskElement.remove();
+            
+            // Check if we need to add back empty state to the source column
+            const sourceColumn = taskElement.closest('.tasks');
+            if (sourceColumn && sourceColumn.children.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-state';
+                emptyDiv.textContent = getDefaultEmptyText(sourceColumn.id);
+                sourceColumn.appendChild(emptyDiv);
+            }
+            
+            // Add empty state back to trash if needed
+            if (trashTasks.children.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-state';
+                emptyDiv.textContent = 'Drop here to delete';
+                trashTasks.appendChild(emptyDiv);
+            }
+            
+            // Update the board state
+            sendUpdate();
+        }
+        
+        // Reset trash column state
+        trashColumn.classList.remove('drag-over');
+    });
+
+    trashTasks.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        trashColumn.classList.add('drag-over');
+    });
+
+    trashTasks.addEventListener('dragleave', () => {
+        trashColumn.classList.remove('drag-over');
+    });
 }
 
 // Export functions for use in other modules
