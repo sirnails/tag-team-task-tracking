@@ -1,5 +1,5 @@
 import { sendUpdate } from './websocket.js';
-import { stopTimer } from './pomodoro.js';
+import { stopTimer, updateStartButtonState } from './pomodoro.js';
 
 let taskIdCounter = 0;
 const todoTasks = document.getElementById('todoTasks');
@@ -54,6 +54,9 @@ function initializeBoard(state) {
             currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
         }
     }
+    
+    // Initialize start button state on board load
+    updateStartButtonState();
 }
 
 function updateBoard(state) {
@@ -71,6 +74,9 @@ function updateBoard(state) {
     } else {
         currentTaskDisplay.innerHTML = '<i class="fas fa-clock"></i> No task selected';
     }
+    
+    // Update start button state when board updates from other sessions
+    updateStartButtonState();
 }
 
 function loadTasksToColumn(columnElement, tasks) {
@@ -287,6 +293,9 @@ function handleDrop(e) {
         currentTaskDisplay.innerHTML = '<i class="fas fa-clock"></i> No task selected';
     }
     
+    // Update start button state after task movement
+    updateStartButtonState();
+    
     sendUpdate();
 }
 
@@ -482,6 +491,9 @@ function setupTrashColumn() {
                 emptyDiv.textContent = 'Drop here to delete';
                 trashTasks.appendChild(emptyDiv);
             }
+            
+            // Update start button state after task deletion
+            updateStartButtonState();
             
             // Update the board state
             sendUpdate();

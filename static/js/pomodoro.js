@@ -12,6 +12,19 @@ let isRunning = false;
 let timerInterval = null;
 let endTime = null;
 
+// Add function to update start button state based on task presence
+function updateStartButtonState() {
+    const inProgressTasks = document.getElementById('inProgressTasks');
+    // Check if there are any non-empty-state elements in the in-progress column
+    const hasTask = inProgressTasks && 
+                   Array.from(inProgressTasks.children)
+                   .some(child => !child.classList.contains('empty-state'));
+    
+    // Disable the start button if no task is in progress
+    pomodoroToggle.disabled = !hasTask;
+    pomodoroToggle.classList.toggle('disabled', !hasTask);
+}
+
 // Safe number conversion helper
 function safeNumber(value, defaultValue) {
     const num = Number(value);
@@ -133,6 +146,17 @@ function handlePomodoroComplete() {
 }
 
 function toggleTimer() {
+    // Check if there's a task in progress before allowing to start
+    const inProgressTasks = document.getElementById('inProgressTasks');
+    const hasTask = inProgressTasks && 
+                   Array.from(inProgressTasks.children)
+                   .some(child => !child.classList.contains('empty-state'));
+    
+    // If trying to start with no task, don't proceed
+    if (!isRunning && !hasTask) {
+        return;
+    }
+    
     // If we're already running, call stopTimer instead of toggling
     if (isRunning) {
         stopTimer();
@@ -265,6 +289,9 @@ function updateTimerState(timerState) {
     if (timerState.elapsedTime >= totalTime && !isRunning) {
         handlePomodoroComplete();
     }
+    
+    // Update start button state after receiving timer state
+    updateStartButtonState();
 }
 
 // Reset timer state when switching rooms
@@ -275,6 +302,7 @@ function resetTimerState() {
     updateTimerDisplay(totalTime);
     updateProgressBar(0);
     pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
+    updateStartButtonState();
 }
 
 // Event listener
@@ -289,5 +317,8 @@ if (Notification.permission !== 'granted') {
     Notification.requestPermission();
 }
 
+// Initialize start button state
+document.addEventListener('DOMContentLoaded', updateStartButtonState);
+
 // Export functions for use in other modules
-export { updateTimerState, resetTimerState, stopTimer };
+export { updateTimerState, resetTimerState, stopTimer, updateStartButtonState };
