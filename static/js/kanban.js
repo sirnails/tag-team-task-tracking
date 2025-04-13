@@ -338,6 +338,9 @@ loadTasksBtn.addEventListener('click', function() {
 
 clearStorageBtn.addEventListener('click', function() {
     if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+        // Stop the timer if it's running
+        stopTimer();
+        
         resetColumn(todoTasks, 'Add tasks to get started');
         resetColumn(inProgressTasks, 'Drag a task here');
         resetColumn(doneTasks, 'Completed tasks');
