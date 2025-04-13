@@ -243,6 +243,11 @@ async def websocket_handler(request):
     # Don't allow connections to deleted rooms
     if room in deleted_rooms:
         print(f"Rejected connection to deleted room {room}")
+        # Instead of just closing, send a redirect message first
+        await ws.send_json({
+            'type': 'redirect_to_default',
+            'message': f"Room '{room}' has been deleted. Redirecting to default room."
+        })
         await ws.close()
         return ws
     

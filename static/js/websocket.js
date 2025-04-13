@@ -121,7 +121,12 @@ function connectWebSocket() {
                     switchRoom('default');
                 }
                 break;
-            // ...existing code...
+            case 'redirect_to_default':
+                alert(data.message);
+                switchRoom('default');
+                break;
+            default:
+                console.log('Unknown message type:', data.type);
         }
     };
     
