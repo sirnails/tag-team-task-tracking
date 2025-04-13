@@ -695,9 +695,9 @@ button i {
 }
 
 .trash-column {
-    position: absolute;
-    left: 0;
+    position: absolute; /* Changed from fixed to absolute */
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     background-color: var(--component-bg);
@@ -710,11 +710,12 @@ button i {
     border-radius: var(--border-radius);
     flex-direction: column;
     display: none;
-    transition: var(--transition);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    transform: none !important; /* Prevent any movement during drag */
 }
 
 .trash-column::before {
-    content: "Drop card here to delete";
+    content: "Drop task here to delete";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -727,43 +728,26 @@ button i {
     pointer-events: none;
     z-index: 1003;
     display: block !important;
-}
-
-.trash-column.visible::before {
-    display: block !important;
-}
-
-.trash-column.drag-over::before {
-    color: var(--text-color);
-}
-
-.trash-column.drag-over h2,
-.trash-column.drag-over .tasks {
-    background: var(--danger-pastel);
-    color: var(--text-color);
-}
-
-.trash-column:hover {
-    opacity: 1 !important;
+    transition: color 0.3s ease;
 }
 
 .trash-column.visible {
-    display: flex;
-    opacity: 1;
+    display: flex !important;
+    opacity: 0.97;
     pointer-events: all;
 }
 
 .trash-column.drag-over {
-    background: var(--danger-pastel);
-    border: 2px solid var(--danger-pastel);
-    box-shadow: 0 12px 28px rgba(255, 181, 181, 0.3);
-    transform: scale(1.02);
+    background-color: var(--danger);
+    border: 2px solid var(--danger);
+    box-shadow: 0 12px 28px rgba(255, 118, 117, 0.3);
+    transform: none !important; /* Prevent movement during drag-over state */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.trash-column.drag-over h2,
-.trash-column.drag-over .tasks {
-    background: var(--danger-pastel);
-    color: var(--text-color);
+.trash-column.drag-over::before {
+    color: white;
+    transition: color 0.3s ease;
 }
 
 #trashColumn .task-placeholder {

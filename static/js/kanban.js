@@ -133,6 +133,7 @@ function makeDraggable(taskElement) {
         
         // Show trash when starting to drag
         const trashColumn = document.getElementById('trashColumn');
+        trashColumn.style.display = 'flex'; // Ensure it's displayed
         trashColumn.classList.add('visible');
         
         const ghost = this.cloneNode(true);
@@ -158,6 +159,9 @@ function makeDraggable(taskElement) {
         // Hide trash when drag ends
         const trashColumn = document.getElementById('trashColumn');
         trashColumn.classList.remove('visible');
+        setTimeout(() => {
+            trashColumn.style.display = 'none';
+        }, 300); // Small delay to allow transition to complete
     });
 }
 
@@ -452,32 +456,40 @@ function setupTrashColumn() {
     const trashTasks = document.getElementById('trashTasks');
     const trashEmptyState = trashTasks.querySelector('.empty-state');
 
-    document.addEventListener('dragstart', () => {
-        if (trashEmptyState) {
-            trashEmptyState.textContent = 'Drop here to delete';
+    document.addEventListener('dragstart', (e) => {
+        // Only show the trash if we're dragging a task
+        if (e.target.classList.contains('task')) {
+            if (trashEmptyState) {
+                trashEmptyState.textContent = 'Drop here to delete';
+            }
+            
+            // Make trash visible with a slight delay to avoid conflicts with drag start
+            setTimeout(() => {
+                trashColumn.style.display = 'flex';
+                trashColumn.classList.add('visible');
+            }, 10);
         }
     });
 
+    // Handle when a task enters the trash area
     trashTasks.addEventListener('dragenter', (e) => {
         e.preventDefault();
         trashColumn.classList.add('drag-over');
-        // Remove any existing placeholders in the trash
-        const placeholders = trashTasks.querySelectorAll('.task-placeholder');
-        placeholders.forEach(p => p.remove());
     });
 
+    // Handle when a task leaves the trash area
     trashTasks.addEventListener('dragleave', (e) => {
-        if (!e.relatedTarget || !trashTasks.contains(e.relatedTarget)) {
+        if (!trashTasks.contains(e.relatedTarget)) {
             trashColumn.classList.remove('drag-over');
         }
     });
 
+    // Required to allow drops
     trashTasks.addEventListener('dragover', (e) => {
         e.preventDefault();
-        trashColumn.classList.add('drag-over');
     });
 
-    // Prevent the trash column from adding tasks back to the board
+    // Handle the actual drop for deletion
     trashTasks.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -496,20 +508,12 @@ function setupTrashColumn() {
             taskElement.remove();
             
             // Check if we need to add back empty state to the source column
-            const sourceColumn = taskElement.closest('.tasks');
+            const sourceColumn = document.getElementById(sourceColumnId);
             if (sourceColumn && sourceColumn.children.length === 0) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'empty-state';
-                emptyDiv.textContent = getDefaultEmptyText(sourceColumn.id);
+                emptyDiv.textContent = getDefaultEmptyText(sourceColumnId);
                 sourceColumn.appendChild(emptyDiv);
-            }
-            
-            // Add empty state back to trash if needed
-            if (trashTasks.children.length === 0) {
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'empty-state';
-                emptyDiv.textContent = 'Drop here to delete';
-                trashTasks.appendChild(emptyDiv);
             }
             
             // Update start button state after task deletion
@@ -519,9 +523,23 @@ function setupTrashColumn() {
             sendUpdate();
         }
         
-        // Reset trash column state
-        trashColumn.classList.remove('drag-over');
+        // Hide trash column after drop
+        hideTrashColumn();
     });
+    
+    // Also ensure the trash column is hidden when dragging ends globally
+    document.addEventListener('dragend', () => {
+        hideTrashColumn();
+    });
+    
+    // Helper function to hide trash column
+    function hideTrashColumn() {
+        trashColumn.classList.remove('drag-over');
+        trashColumn.classList.remove('visible');
+        setTimeout(() => {
+            trashColumn.style.display = 'none';
+        }, 300);
+    }
 }
 
 // Export functions for use in other modules
