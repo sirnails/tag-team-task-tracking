@@ -1,33 +1,61 @@
 import { sendUpdate } from './websocket.js';
 import { stopTimer, updateStartButtonState } from './pomodoro.js';
 
-let taskIdCounter = 0;
-const todoTasks = document.getElementById('todoTasks');
-const inProgressTasks = document.getElementById('inProgressTasks');
-const doneTasks = document.getElementById('doneTasks');
-const taskInput = document.getElementById('taskInput');
-const loadTasksBtn = document.getElementById('loadTasks');
-const clearStorageBtn = document.getElementById('clearStorage');
-const currentTaskDisplay = document.getElementById('currentTaskDisplay');
+// DOM elements - grouped for better organization
+const DOM = {
+    columns: {
+        todo: document.getElementById('todoTasks'),
+        inProgress: document.getElementById('inProgressTasks'),
+        done: document.getElementById('doneTasks'),
+        trash: document.getElementById('trashTasks')
+    },
+    inputs: {
+        taskInput: document.getElementById('taskInput'),
+        taskNameInput: null, // Will be set in DOMContentLoaded
+        taskDetailInput: null // Will be set in DOMContentLoaded
+    },
+    buttons: {
+        loadTasks: document.getElementById('loadTasks'),
+        clearStorage: document.getElementById('clearStorage'),
+        saveTaskDetails: null, // Will be set in DOMContentLoaded
+        cancelTaskDetails: null // Will be set in DOMContentLoaded
+    },
+    displays: {
+        currentTask: document.getElementById('currentTaskDisplay')
+    },
+    modals: {
+        taskEdit: null, // Will be set in DOMContentLoaded
+        closeBtn: null // Will be set in DOMContentLoaded
+    }
+};
 
+let taskIdCounter = 0;
 let currentEditingTask = null;
-let taskEditModal, taskDetailInput, taskNameInput, closeModalBtn, saveTaskDetailsBtn;
+
+// Default empty state text for each column
+const EMPTY_STATE_TEXT = {
+    todoTasks: 'Add tasks to get started',
+    inProgressTasks: 'Drag a task here',
+    doneTasks: 'Completed tasks',
+    trashTasks: 'Drop here to delete'
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    taskEditModal = document.getElementById('taskEditModal');
-    taskDetailInput = document.getElementById('taskDetailInput');
-    taskNameInput = document.getElementById('taskNameInput');
-    closeModalBtn = document.querySelector('.close-modal');
-    saveTaskDetailsBtn = document.getElementById('saveTaskDetails');
-    const cancelTaskDetailsBtn = document.getElementById('cancelTaskDetails');
+    // Initialize DOM references
+    DOM.modals.taskEdit = document.getElementById('taskEditModal');
+    DOM.inputs.taskDetailInput = document.getElementById('taskDetailInput');
+    DOM.inputs.taskNameInput = document.getElementById('taskNameInput');
+    DOM.modals.closeBtn = document.querySelector('.close-modal');
+    DOM.buttons.saveTaskDetails = document.getElementById('saveTaskDetails');
+    DOM.buttons.cancelTaskDetails = document.getElementById('cancelTaskDetails');
 
     // Event listeners for modal
-    closeModalBtn.addEventListener('click', closeEditModal);
-    saveTaskDetailsBtn.addEventListener('click', saveTaskDetails);
-    cancelTaskDetailsBtn.addEventListener('click', closeEditModal);
+    DOM.modals.closeBtn.addEventListener('click', closeEditModal);
+    DOM.buttons.saveTaskDetails.addEventListener('click', saveTaskDetails);
+    DOM.buttons.cancelTaskDetails.addEventListener('click', closeEditModal);
 
     window.addEventListener('click', (e) => {
-        if (e.target === taskEditModal) {
+        if (e.target === DOM.modals.taskEdit) {
             closeEditModal();
         }
     });
@@ -37,47 +65,47 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTrashColumn();
 });
 
+// Board initialization and updates
 function initializeBoard(state) {
-    resetColumn(todoTasks, 'Add tasks to get started');
-    resetColumn(inProgressTasks, 'Drag a task here');
-    resetColumn(doneTasks, 'Completed tasks');
+    resetColumn(DOM.columns.todo, EMPTY_STATE_TEXT.todoTasks);
+    resetColumn(DOM.columns.inProgress, EMPTY_STATE_TEXT.inProgressTasks);
+    resetColumn(DOM.columns.done, EMPTY_STATE_TEXT.doneTasks);
     
-    loadTasksToColumn(todoTasks, state.todo || []);
-    loadTasksToColumn(inProgressTasks, state.inProgress || []);
-    loadTasksToColumn(doneTasks, state.done || []);
+    loadTasksToColumn(DOM.columns.todo, state.todo || []);
+    loadTasksToColumn(DOM.columns.inProgress, state.inProgress || []);
+    loadTasksToColumn(DOM.columns.done, state.done || []);
     
     taskIdCounter = state.taskIdCounter || 0;
     
-    if (state.inProgress && state.inProgress.length > 0) {
-        const taskElement = document.getElementById(state.inProgress[0].id);
-        if (taskElement) {
-            const taskTitle = taskElement.querySelector('.task-title').textContent;
-            currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
-        }
-    }
+    updateCurrentTaskDisplay(state.inProgress);
     
     // Initialize start button state on board load
     updateStartButtonState();
 }
 
 function updateBoard(state) {
-    loadTasksToColumn(todoTasks, state.todo);
-    loadTasksToColumn(inProgressTasks, state.inProgress);
-    loadTasksToColumn(doneTasks, state.done);
+    loadTasksToColumn(DOM.columns.todo, state.todo);
+    loadTasksToColumn(DOM.columns.inProgress, state.inProgress);
+    loadTasksToColumn(DOM.columns.done, state.done);
     taskIdCounter = state.taskIdCounter || 0;
     
-    if (state.currentTask) {
-        const taskElement = document.getElementById(state.currentTask.id);
-        if (taskElement) {
-            const taskTitle = taskElement.querySelector('.task-title').textContent;
-            currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
-        }
-    } else {
-        currentTaskDisplay.innerHTML = '<i class="fas fa-clock"></i> No task selected';
-    }
+    updateCurrentTaskDisplay(state.inProgress);
     
     // Update start button state when board updates from other sessions
     updateStartButtonState();
+}
+
+// Extracted to a separate function for reuse
+function updateCurrentTaskDisplay(inProgressTasks) {
+    if (inProgressTasks && inProgressTasks.length > 0) {
+        const taskElement = document.getElementById(inProgressTasks[0].id);
+        if (taskElement) {
+            const taskTitle = taskElement.querySelector('.task-title').textContent;
+            DOM.displays.currentTask.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
+        }
+    } else {
+        DOM.displays.currentTask.innerHTML = '<i class="fas fa-clock"></i> No task selected';
+    }
 }
 
 function loadTasksToColumn(columnElement, tasks) {
@@ -101,12 +129,7 @@ function loadTasksToColumn(columnElement, tasks) {
 }
 
 function getDefaultEmptyText(columnId) {
-    switch(columnId) {
-        case 'todoTasks': return 'Add tasks to get started';
-        case 'inProgressTasks': return 'Drag a task here';
-        case 'doneTasks': return 'Completed tasks';
-        default: return 'Empty';
-    }
+    return EMPTY_STATE_TEXT[columnId] || 'Empty';
 }
 
 function resetColumn(column, emptyText) {
@@ -117,6 +140,7 @@ function resetColumn(column, emptyText) {
     column.appendChild(emptyDiv);
 }
 
+// Task drag and drop functionality
 function makeDraggable(taskElement) {
     taskElement.draggable = true;
     
@@ -132,22 +156,11 @@ function makeDraggable(taskElement) {
         this.classList.add('dragging');
         
         // Show trash when starting to drag
-        const trashColumn = document.getElementById('trashColumn');
-        trashColumn.style.display = 'flex'; // Ensure it's displayed
-        trashColumn.classList.add('visible');
+        showTrashColumn();
         
-        const ghost = this.cloneNode(true);
-        ghost.classList.add('task-ghost');
-        ghost.style.position = 'fixed';
-        ghost.style.width = `${this.offsetWidth}px`;
-        ghost.style.pointerEvents = 'none';
-        ghost.style.zIndex = '1000';
-        ghost.style.top = '-9999px';
-        document.body.appendChild(ghost);
+        // Create ghost element for drag preview
+        createDragGhost(this, e);
         
-        e.dataTransfer.setDragImage(ghost, 0, 0);
-        
-        setTimeout(() => document.body.removeChild(ghost), 0);
         return true;
     });
     
@@ -157,12 +170,38 @@ function makeDraggable(taskElement) {
         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
         
         // Hide trash when drag ends
-        const trashColumn = document.getElementById('trashColumn');
-        trashColumn.classList.remove('visible');
-        setTimeout(() => {
-            trashColumn.style.display = 'none';
-        }, 300); // Small delay to allow transition to complete
+        hideTrashColumn();
     });
+}
+
+// Extracted functions for better readability
+function createDragGhost(taskElement, event) {
+    const ghost = taskElement.cloneNode(true);
+    ghost.classList.add('task-ghost');
+    ghost.style.position = 'fixed';
+    ghost.style.width = `${taskElement.offsetWidth}px`;
+    ghost.style.pointerEvents = 'none';
+    ghost.style.zIndex = '1000';
+    ghost.style.top = '-9999px';
+    document.body.appendChild(ghost);
+    
+    event.dataTransfer.setDragImage(ghost, 0, 0);
+    
+    setTimeout(() => document.body.removeChild(ghost), 0);
+}
+
+function showTrashColumn() {
+    const trashColumn = document.getElementById('trashColumn');
+    trashColumn.style.display = 'flex'; // Ensure it's displayed
+    trashColumn.classList.add('visible');
+}
+
+function hideTrashColumn() {
+    const trashColumn = document.getElementById('trashColumn');
+    trashColumn.classList.remove('visible');
+    setTimeout(() => {
+        trashColumn.style.display = 'none';
+    }, 300); // Small delay to allow transition to complete
 }
 
 function getDragAfterElement(container, y) {
@@ -184,7 +223,6 @@ function setupDragAndDrop() {
     const columns = document.querySelectorAll('.column');
     columns.forEach(column => {
         const tasksContainer = column.querySelector('.tasks');
-        let lastHoveredElement = null;
         let placeholder = null;
 
         column.addEventListener('dragover', function(e) {
@@ -243,10 +281,6 @@ function setupDragAndDrop() {
                 placeholder.remove();
                 placeholder = null;
             }
-            if (lastHoveredElement) {
-                lastHoveredElement.classList.remove('drag-over');
-                lastHoveredElement = null;
-            }
             document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
         });
     });
@@ -290,12 +324,13 @@ function handleDrop(e) {
         tasksContainer.appendChild(taskElement);
     }
     
-    if (column.id === 'inProgressTasks') {
+    // Update current task display if needed
+    if (column.id === 'inProgressColumn') {
         const taskTitle = taskElement.querySelector('.task-title').textContent;
-        currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
-    } else if (taskElement.parentElement.id !== 'inProgressTasks' && 
+        DOM.displays.currentTask.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle}`;
+    } else if (sourceColumnId === 'inProgressTasks' && 
                document.getElementById('inProgressTasks').children.length === 0) {
-        currentTaskDisplay.innerHTML = '<i class="fas fa-clock"></i> No task selected';
+        DOM.displays.currentTask.innerHTML = '<i class="fas fa-clock"></i> No task selected';
     }
     
     // Update start button state after task movement
@@ -318,44 +353,46 @@ function getTaskData(container) {
     });
 }
 
-// Event listeners
-loadTasksBtn.addEventListener('click', function() {
-    const tasks = taskInput.value.split('\n').filter(task => task.trim() !== '');
-    
-    if (tasks.length === 0) {
+// Event handlers
+DOM.buttons.loadTasks.addEventListener('click', function() {
+    const taskText = DOM.inputs.taskInput.value;
+    if (!taskText.trim()) {
         alert('Please enter at least one task!');
         return;
     }
     
-    if (todoTasks.querySelector('.empty-state') && tasks.length > 0) {
-        todoTasks.querySelector('.empty-state').remove();
+    const tasks = taskText.split('\n').filter(task => task.trim() !== '');
+    
+    if (DOM.columns.todo.querySelector('.empty-state') && tasks.length > 0) {
+        DOM.columns.todo.querySelector('.empty-state').remove();
     }
     
     tasks.forEach((task) => {
         const taskElement = createTaskElement(task);
-        todoTasks.appendChild(taskElement);
+        DOM.columns.todo.appendChild(taskElement);
     });
     
-    taskInput.value = '';
+    DOM.inputs.taskInput.value = '';
     sendUpdate();
 });
 
-clearStorageBtn.addEventListener('click', function() {
+DOM.buttons.clearStorage.addEventListener('click', function() {
     if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
         // Stop the timer if it's running
         stopTimer();
         
-        resetColumn(todoTasks, 'Add tasks to get started');
-        resetColumn(inProgressTasks, 'Drag a task here');
-        resetColumn(doneTasks, 'Completed tasks');
+        resetColumn(DOM.columns.todo, EMPTY_STATE_TEXT.todoTasks);
+        resetColumn(DOM.columns.inProgress, EMPTY_STATE_TEXT.inProgressTasks);
+        resetColumn(DOM.columns.done, EMPTY_STATE_TEXT.doneTasks);
         
-        currentTaskDisplay.innerHTML = '<i class="fas fa-clock"></i> No task selected';
+        DOM.displays.currentTask.innerHTML = '<i class="fas fa-clock"></i> No task selected';
         taskIdCounter = 0;
         
         sendUpdate();
     }
 });
 
+// Task element creation and editing
 function createTaskElement(taskText, details = '') {
     const taskElement = document.createElement('div');
     taskElement.className = 'task';
@@ -401,20 +438,18 @@ function openEditModal(taskElement) {
     const taskDetails = taskContent.querySelector('.task-details');
     
     // Populate both task name and details inputs
-    taskNameInput.value = taskTitle ? taskTitle.textContent : '';
-    taskDetailInput.value = taskDetails ? taskDetails.textContent : '';
+    DOM.inputs.taskNameInput.value = taskTitle ? taskTitle.textContent : '';
+    DOM.inputs.taskDetailInput.value = taskDetails ? taskDetails.textContent : '';
     
-    const modal = document.getElementById('taskEditModal');
-    console.log('Modal element:', modal);
-    if (modal) {
-        modal.style.display = 'block';
+    if (DOM.modals.taskEdit) {
+        DOM.modals.taskEdit.style.display = 'block';
     } else {
         console.error('Modal element not found!');
     }
 }
 
 function closeEditModal() {
-    taskEditModal.style.display = 'none';
+    DOM.modals.taskEdit.style.display = 'none';
     currentEditingTask = null;
 }
 
@@ -426,25 +461,25 @@ function saveTaskDetails() {
     let taskDetails = taskContent.querySelector('.task-details');
     
     // Update task title if it's not empty
-    if (taskNameInput.value.trim()) {
-        taskTitle.textContent = taskNameInput.value.trim();
+    if (DOM.inputs.taskNameInput.value.trim()) {
+        taskTitle.textContent = DOM.inputs.taskNameInput.value.trim();
     }
     
     // Update task details
-    if (taskDetailInput.value.trim()) {
+    if (DOM.inputs.taskDetailInput.value.trim()) {
         if (!taskDetails) {
             taskDetails = document.createElement('div');
             taskDetails.className = 'task-details';
             taskContent.appendChild(taskDetails);
         }
-        taskDetails.textContent = taskDetailInput.value.trim();
+        taskDetails.textContent = DOM.inputs.taskDetailInput.value.trim();
     } else if (taskDetails) {
         taskContent.removeChild(taskDetails);
     }
     
     // Update the current task display if this is the task in progress
     if (currentEditingTask.parentElement.id === 'inProgressTasks') {
-        currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle.textContent}`;
+        DOM.displays.currentTask.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle.textContent}`;
     }
     
     closeEditModal();
@@ -453,14 +488,14 @@ function saveTaskDetails() {
 
 function setupTrashColumn() {
     const trashColumn = document.getElementById('trashColumn');
-    const trashTasks = document.getElementById('trashTasks');
+    const trashTasks = DOM.columns.trash;
     const trashEmptyState = trashTasks.querySelector('.empty-state');
 
     document.addEventListener('dragstart', (e) => {
         // Only show the trash if we're dragging a task
         if (e.target.classList.contains('task')) {
             if (trashEmptyState) {
-                trashEmptyState.textContent = 'Drop here to delete';
+                trashEmptyState.textContent = EMPTY_STATE_TEXT.trashTasks;
             }
             
             // Make trash visible with a slight delay to avoid conflicts with drag start
@@ -526,20 +561,6 @@ function setupTrashColumn() {
         // Hide trash column after drop
         hideTrashColumn();
     });
-    
-    // Also ensure the trash column is hidden when dragging ends globally
-    document.addEventListener('dragend', () => {
-        hideTrashColumn();
-    });
-    
-    // Helper function to hide trash column
-    function hideTrashColumn() {
-        trashColumn.classList.remove('drag-over');
-        trashColumn.classList.remove('visible');
-        setTimeout(() => {
-            trashColumn.style.display = 'none';
-        }, 300);
-    }
 }
 
 // Export functions for use in other modules
