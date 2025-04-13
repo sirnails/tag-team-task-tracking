@@ -1,4 +1,5 @@
 import { sendUpdate } from './websocket.js';
+import { stopTimer } from './pomodoro.js';
 
 let taskIdCounter = 0;
 const todoTasks = document.getElementById('todoTasks');
@@ -119,6 +120,8 @@ function makeDraggable(taskElement) {
         }
         
         e.dataTransfer.setData('text/plain', this.id);
+        // Store the parent column id for tracking where the task is coming from
+        e.dataTransfer.setData('source-column', this.parentElement.id);
         this.classList.add('dragging');
         
         // Show trash when starting to drag
@@ -251,8 +254,15 @@ function handleDrop(e) {
     const taskId = e.dataTransfer.getData('text/plain');
     if (!taskId) return;
     
+    const sourceColumnId = e.dataTransfer.getData('source-column');
     const taskElement = document.getElementById(taskId);
     if (!taskElement?.textContent?.trim()) return;
+
+    // Check if the task was dragged from the "in progress" column to any other column
+    if (sourceColumnId === 'inProgressTasks' && tasksContainer.id !== 'inProgressTasks') {
+        // Stop the timer when a task is moved out of the "in progress" column
+        stopTimer();
+    }
 
     // Check if dropping in inProgress column and it already has a task
     if (column.id === 'inProgressColumn' && 
@@ -444,9 +454,15 @@ function setupTrashColumn() {
         e.stopPropagation();
         
         const taskId = e.dataTransfer.getData('text/plain');
+        const sourceColumnId = e.dataTransfer.getData('source-column');
         const taskElement = document.getElementById(taskId);
         
         if (taskElement) {
+            // If the task is being dragged from "in progress" to trash, stop the timer
+            if (sourceColumnId === 'inProgressTasks') {
+                stopTimer();
+            }
+            
             // Remove the task
             taskElement.remove();
             

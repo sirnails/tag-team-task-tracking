@@ -133,58 +133,58 @@ function handlePomodoroComplete() {
 }
 
 function toggleTimer() {
-    isRunning = !isRunning;
-    
+    // If we're already running, call stopTimer instead of toggling
     if (isRunning) {
-        // Start the timer
-        pomodoroToggle.innerHTML = '<i class="fas fa-stop"></i> Stop';
-        
-        // Set client-side end time for display updates
-        endTime = (Date.now() / 1000) + totalTime;
-        
-        // Send update to server
-        sendTimerUpdate({
-            isRunning: true,
-            totalTime: totalTime,
-            elapsedTime: 0,
-            endTime: endTime
-        });
-        
-        // Start client-side timer updates
-        startClientTimerUpdates();
-        
-        // Set a short timeout to allow the timer update to be sent to the server
-        // before refreshing the page
-        setTimeout(() => {
-            // Force browser refresh to ensure all clients are synchronized
-            window.location.reload();
-        }, 100);
-    } else {
-        // Stop and reset the timer
-        pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
-        
-        // Tell server to stop the timer
-        sendTimerUpdate({
-            isRunning: false,
-            elapsedTime: 0,
-            endTime: null
-        });
-        
-        // Reset client-side state
-        endTime = null;
-        stopClientTimerUpdates();
-        
-        updateTimerDisplay(totalTime);
-        updateProgressBar(0);
-        createConfetti(); // Show confetti when stopping the timer
-        
-        // Set a short timeout to allow the timer update to be sent to the server
-        // before refreshing the page
-        setTimeout(() => {
-            // Force browser refresh to ensure all clients are synchronized
-            window.location.reload();
-        }, 100);
+        stopTimer();
+        return;
     }
+    
+    // Otherwise, we're starting the timer
+    isRunning = true;
+    
+    // Start the timer
+    pomodoroToggle.innerHTML = '<i class="fas fa-stop"></i> Stop';
+    
+    // Set client-side end time for display updates
+    endTime = (Date.now() / 1000) + totalTime;
+    
+    // Send update to server
+    sendTimerUpdate({
+        isRunning: true,
+        totalTime: totalTime,
+        elapsedTime: 0,
+        endTime: endTime
+    });
+    
+    // Start client-side timer updates
+    startClientTimerUpdates();
+}
+
+// Function to stop the timer, extracted from toggleTimer for external use
+function stopTimer() {
+    if (!isRunning) return; // Don't do anything if timer is already stopped
+
+    isRunning = false;
+    pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
+    
+    // Tell server to stop the timer
+    sendTimerUpdate({
+        isRunning: false,
+        elapsedTime: 0,
+        endTime: null
+    });
+    
+    // Reset client-side state
+    endTime = null;
+    stopClientTimerUpdates();
+    
+    updateTimerDisplay(totalTime);
+    updateProgressBar(0);
+    createConfetti(); // Show confetti when stopping the timer
+    
+    // Instead of reloading the page, which might be causing issues,
+    // we'll just trust the client-side state changes we made above
+    // The next time the server sends an update, it will reflect the stopped state
 }
 
 function updateTimerState(timerState) {
@@ -290,4 +290,4 @@ if (Notification.permission !== 'granted') {
 }
 
 // Export functions for use in other modules
-export { updateTimerState, resetTimerState };
+export { updateTimerState, resetTimerState, stopTimer };
