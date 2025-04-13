@@ -11,11 +11,12 @@ const clearStorageBtn = document.getElementById('clearStorage');
 const currentTaskDisplay = document.getElementById('currentTaskDisplay');
 
 let currentEditingTask = null;
-let taskEditModal, taskDetailInput, closeModalBtn, saveTaskDetailsBtn;
+let taskEditModal, taskDetailInput, taskNameInput, closeModalBtn, saveTaskDetailsBtn;
 
 document.addEventListener('DOMContentLoaded', () => {
     taskEditModal = document.getElementById('taskEditModal');
     taskDetailInput = document.getElementById('taskDetailInput');
+    taskNameInput = document.getElementById('taskNameInput');
     closeModalBtn = document.querySelector('.close-modal');
     saveTaskDetailsBtn = document.getElementById('saveTaskDetails');
     const cancelTaskDetailsBtn = document.getElementById('cancelTaskDetails');
@@ -389,7 +390,11 @@ function openEditModal(taskElement) {
     console.log('Opening modal for task:', taskElement);
     currentEditingTask = taskElement;
     const taskContent = taskElement.querySelector('.task-content');
+    const taskTitle = taskContent.querySelector('.task-title');
     const taskDetails = taskContent.querySelector('.task-details');
+    
+    // Populate both task name and details inputs
+    taskNameInput.value = taskTitle ? taskTitle.textContent : '';
     taskDetailInput.value = taskDetails ? taskDetails.textContent : '';
     
     const modal = document.getElementById('taskEditModal');
@@ -410,8 +415,15 @@ function saveTaskDetails() {
     if (!currentEditingTask) return;
     
     const taskContent = currentEditingTask.querySelector('.task-content');
+    const taskTitle = taskContent.querySelector('.task-title');
     let taskDetails = taskContent.querySelector('.task-details');
     
+    // Update task title if it's not empty
+    if (taskNameInput.value.trim()) {
+        taskTitle.textContent = taskNameInput.value.trim();
+    }
+    
+    // Update task details
     if (taskDetailInput.value.trim()) {
         if (!taskDetails) {
             taskDetails = document.createElement('div');
@@ -421,6 +433,11 @@ function saveTaskDetails() {
         taskDetails.textContent = taskDetailInput.value.trim();
     } else if (taskDetails) {
         taskContent.removeChild(taskDetails);
+    }
+    
+    // Update the current task display if this is the task in progress
+    if (currentEditingTask.parentElement.id === 'inProgressTasks') {
+        currentTaskDisplay.innerHTML = `<i class="fas fa-clock"></i> ${taskTitle.textContent}`;
     }
     
     closeEditModal();
