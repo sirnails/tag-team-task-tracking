@@ -5,18 +5,74 @@ const pomodoroToggle = document.getElementById('pomodoroToggle');
 const progressBar = document.getElementById('progressBar');
 const currentTaskDisplay = document.getElementById('currentTaskDisplay');
 
-const totalTime = 25 * 60;
+// Constants and state variables
+const DEFAULT_TOTAL_TIME = 25 * 60; // 25 minutes in seconds
+let totalTime = DEFAULT_TOTAL_TIME;  
 let isRunning = false;
+let timerInterval = null;
+let endTime = null;
+
+// Safe number conversion helper
+function safeNumber(value, defaultValue) {
+    const num = Number(value);
+    return (!isNaN(num) && isFinite(num)) ? num : defaultValue;
+}
 
 function updateTimerDisplay(timeLeft) {
+    // Ensure timeLeft is a valid number
+    timeLeft = safeNumber(timeLeft, totalTime);
+    
     const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const seconds = Math.floor(timeLeft % 60);
+    
+    // Ensure minutes and seconds are valid numbers before formatting
+    const minStr = (!isNaN(minutes) && isFinite(minutes)) ? 
+        minutes.toString().padStart(2, '0') : '25';
+    const secStr = (!isNaN(seconds) && isFinite(seconds)) ? 
+        seconds.toString().padStart(2, '0') : '00';
+    
+    timerDisplay.textContent = `${minStr}:${secStr}`;
 }
 
 function updateProgressBar(elapsedTime) {
-    const progressPercentage = (elapsedTime / totalTime) * 100;
-    progressBar.style.width = `${Math.min(progressPercentage, 100)}%`;
+    // Ensure elapsedTime is a valid number
+    elapsedTime = safeNumber(elapsedTime, 0);
+    const total = safeNumber(totalTime, DEFAULT_TOTAL_TIME);
+    
+    const progressPercentage = (elapsedTime / total) * 100;
+    progressBar.style.width = `${Math.min(Math.max(progressPercentage, 0), 100)}%`;
+}
+
+// Create a client-side interval to update the display
+function startClientTimerUpdates() {
+    stopClientTimerUpdates(); // Clear any existing interval
+    
+    timerInterval = setInterval(() => {
+        if (isRunning && endTime) {
+            const now = Date.now() / 1000;
+            const timeLeft = Math.max(0, Math.round(endTime - now));
+            const elapsedTime = Math.min(totalTime, totalTime - timeLeft);
+            
+            updateTimerDisplay(timeLeft);
+            updateProgressBar(elapsedTime);
+            
+            // If timer completes during this client-side update
+            if (timeLeft === 0) {
+                handlePomodoroComplete();
+                isRunning = false;
+                endTime = null;
+                stopClientTimerUpdates();
+                pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
+            }
+        }
+    }, 250); // Update 4 times per second for smoother display
+}
+
+function stopClientTimerUpdates() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
 }
 
 function createConfetti() {
@@ -78,50 +134,147 @@ function handlePomodoroComplete() {
 
 function toggleTimer() {
     isRunning = !isRunning;
+    
     if (isRunning) {
         // Start the timer
         pomodoroToggle.innerHTML = '<i class="fas fa-stop"></i> Stop';
+        
+        // Set client-side end time for display updates
+        endTime = (Date.now() / 1000) + totalTime;
+        
+        // Send update to server
         sendTimerUpdate({
-            timeLeft: totalTime,
             isRunning: true,
+            totalTime: totalTime,
             elapsedTime: 0,
-            lastUpdate: Date.now() / 1000
+            endTime: endTime
         });
+        
+        // Start client-side timer updates
+        startClientTimerUpdates();
+        
+        // Set a short timeout to allow the timer update to be sent to the server
+        // before refreshing the page
+        setTimeout(() => {
+            // Force browser refresh to ensure all clients are synchronized
+            window.location.reload();
+        }, 100);
     } else {
         // Stop and reset the timer
         pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
+        
+        // Tell server to stop the timer
         sendTimerUpdate({
-            timeLeft: totalTime,
             isRunning: false,
             elapsedTime: 0,
-            lastUpdate: Date.now() / 1000
+            endTime: null
         });
+        
+        // Reset client-side state
+        endTime = null;
+        stopClientTimerUpdates();
+        
         updateTimerDisplay(totalTime);
         updateProgressBar(0);
         createConfetti(); // Show confetti when stopping the timer
+        
+        // Set a short timeout to allow the timer update to be sent to the server
+        // before refreshing the page
+        setTimeout(() => {
+            // Force browser refresh to ensure all clients are synchronized
+            window.location.reload();
+        }, 100);
     }
 }
 
 function updateTimerState(timerState) {
     console.log('Received timer state:', timerState);
-    if (!timerState) return;
-    
-    updateTimerDisplay(timerState.timeLeft);
-    updateProgressBar(timerState.elapsedTime);
-    
-    // Update button state based on timer state
-    if (timerState.isRunning !== isRunning) {
-        isRunning = timerState.isRunning;
-        pomodoroToggle.innerHTML = isRunning ? 
-            '<i class="fas fa-stop"></i> Stop' : 
-            '<i class="fas fa-play"></i> Start';
+    if (!timerState) {
+        return;
     }
     
-    if (timerState.timeLeft <= 0 && !timerState.isRunning) {
+    // Update total time if provided and valid
+    if (timerState.totalTime) {
+        totalTime = safeNumber(timerState.totalTime, DEFAULT_TOTAL_TIME);
+    }
+    
+    // Update running state
+    const wasRunning = isRunning;
+    isRunning = !!timerState.isRunning;
+    
+    // Update button to match state
+    pomodoroToggle.innerHTML = isRunning ? 
+        '<i class="fas fa-stop"></i> Stop' : 
+        '<i class="fas fa-play"></i> Start';
+    
+    // Handle end time when timer is running
+    if (isRunning) {
+        if (timerState.endTime) {
+            // Store server end time (ensure it's a number)
+            const serverEndTime = safeNumber(timerState.endTime, null);
+            
+            if (serverEndTime) {
+                endTime = serverEndTime;
+                
+                // Calculate current time left based on end time
+                const now = Date.now() / 1000;
+                const timeLeft = Math.max(0, Math.round(endTime - now));
+                const elapsedTime = Math.min(totalTime, totalTime - timeLeft);
+                
+                // Update display
+                updateTimerDisplay(timeLeft);
+                updateProgressBar(elapsedTime);
+                
+                // Start client-side timer updates if not already running
+                if (!wasRunning) {
+                    startClientTimerUpdates();
+                }
+            } else {
+                // If server sent an invalid end time, create a new one
+                console.warn('Invalid endTime from server, creating new one');
+                endTime = (Date.now() / 1000) + totalTime;
+                sendTimerUpdate({
+                    isRunning: true,
+                    totalTime: totalTime,
+                    endTime: endTime
+                });
+                startClientTimerUpdates();
+            }
+        } else {
+            // No end time but timer is running - create one
+            console.warn('No endTime but timer running, creating one');
+            endTime = (Date.now() / 1000) + totalTime;
+            sendTimerUpdate({
+                isRunning: true,
+                totalTime: totalTime,
+                endTime: endTime
+            });
+            startClientTimerUpdates();
+        }
+    } else {
+        // Timer is stopped
+        endTime = null;
+        stopClientTimerUpdates();
+        
+        // Reset display to full time
+        updateTimerDisplay(totalTime);
+        updateProgressBar(0);
+    }
+    
+    // Handle completed timer
+    if (timerState.elapsedTime >= totalTime && !isRunning) {
         handlePomodoroComplete();
-        isRunning = false;
-        pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
     }
+}
+
+// Reset timer state when switching rooms
+function resetTimerState() {
+    isRunning = false;
+    endTime = null;
+    stopClientTimerUpdates();
+    updateTimerDisplay(totalTime);
+    updateProgressBar(0);
+    pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
 }
 
 // Event listener
@@ -137,4 +290,4 @@ if (Notification.permission !== 'granted') {
 }
 
 // Export functions for use in other modules
-export { updateTimerState };
+export { updateTimerState, resetTimerState };

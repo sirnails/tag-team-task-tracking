@@ -21,27 +21,52 @@ def load_room_states():
                     'done': [],
                     'taskIdCounter': 0,
                     'timer': {
-                        'timeLeft': 25 * 60,
+                        'endTime': None,
                         'isRunning': False,
                         'elapsedTime': 0,
-                        'lastUpdate': None
+                        'totalTime': 25 * 60  # 25 minutes in seconds
                     },
                     'currentTask': None
                 })
+                
+                # Handle migration from old format to new format
+                for room, room_data in saved_states.items():
+                    if 'timer' in room_data:
+                        timer = room_data['timer']
+                        # Convert from old format (timeLeft) to new format (endTime)
+                        if 'timeLeft' in timer and timer['isRunning'] and timer.get('lastUpdate'):
+                            # Calculate end time based on lastUpdate + timeLeft
+                            end_time = timer['lastUpdate'] + timer['timeLeft']
+                            timer['endTime'] = end_time
+                            # Remove old fields
+                            if 'timeLeft' in timer:
+                                del timer['timeLeft']
+                            if 'lastUpdate' in timer:
+                                del timer['lastUpdate']
+                        elif not timer['isRunning']:
+                            timer['endTime'] = None
+                            # Remove old fields
+                            if 'timeLeft' in timer:
+                                del timer['timeLeft']
+                            if 'lastUpdate' in timer:
+                                del timer['lastUpdate']
+                
                 states.update(saved_states)
                 return states
     except Exception as e:
         print(f"Error loading room states: {e}")
+    
+    # Return default state structure
     return defaultdict(lambda: {
         'todo': [],
         'inProgress': [],
         'done': [],
         'taskIdCounter': 0,
         'timer': {
-            'timeLeft': 25 * 60,
+            'endTime': None,
             'isRunning': False,
             'elapsedTime': 0,
-            'lastUpdate': None
+            'totalTime': 25 * 60  # 25 minutes in seconds
         },
         'currentTask': None
     })
@@ -123,20 +148,56 @@ async def update_timer():
     while True:
         try:
             save_needed = False
-            for room in clients:
-                room_state = rooms_state[room]
-                if room_state['timer']['isRunning']:
-                    room_state['timer']['timeLeft'] = max(0, room_state['timer']['timeLeft'] - 1)
-                    room_state['timer']['elapsedTime'] += 1
-                    await broadcast_timer_update(room)
-                    save_needed = True
-                    
-                    if room_state['timer']['timeLeft'] <= 0:
-                        room_state['timer']['isRunning'] = False
-                        room_state['timer']['timeLeft'] = 25 * 60
-                        room_state['timer']['elapsedTime'] = 0
-                        await broadcast_timer_update(room)
+            current_time = time.time()
             
+            # Process each room independently
+            for room in list(rooms_state.keys()):
+                # Skip rooms that have no clients or don't exist
+                if room in deleted_rooms or not clients.get(room):
+                    continue
+                    
+                room_state = rooms_state[room]
+                timer_state = room_state['timer']
+                
+                if timer_state['isRunning']:
+                    # Check end time for this room
+                    end_time = timer_state.get('endTime')
+                    
+                    # Validate end_time - fix it if it's invalid
+                    if end_time is None or not isinstance(end_time, (int, float)) or end_time <= 0:
+                        # If no valid end time is set but timer is running, set it
+                        total_time = timer_state.get('totalTime', 25 * 60)
+                        if not isinstance(total_time, (int, float)) or total_time <= 0:
+                            total_time = 25 * 60  # Default if invalid
+                            timer_state['totalTime'] = total_time
+                            
+                        timer_state['endTime'] = current_time + total_time
+                        timer_state['elapsedTime'] = 0
+                        save_needed = True
+                        continue
+                        
+                    # Calculate time left based on end time
+                    time_left = max(0, end_time - current_time)
+                    
+                    # Update elapsed time based on total time and time left
+                    total_time = timer_state.get('totalTime', 25 * 60)
+                    if not isinstance(total_time, (int, float)) or total_time <= 0:
+                        total_time = 25 * 60  # Default if invalid
+                        timer_state['totalTime'] = total_time
+                        
+                    timer_state['elapsedTime'] = total_time - time_left
+                    
+                    # Broadcast the updated timer to clients in this room only
+                    await broadcast_timer_update(room)
+                    
+                    # Check if timer completed
+                    if time_left <= 0:
+                        timer_state['isRunning'] = False
+                        timer_state['endTime'] = None
+                        timer_state['elapsedTime'] = 0
+                        save_needed = True
+                        await broadcast_timer_update(room)
+                
             if save_needed:
                 await save_room_states()
             
@@ -257,17 +318,54 @@ async def websocket_handler(request):
                 elif data['type'] == 'timer':
                     # Update timer state
                     new_state = data['data']
+                    
                     if 'isRunning' in new_state:
                         room_state['timer']['isRunning'] = new_state['isRunning']
-                    if 'timeLeft' in new_state:
-                        room_state['timer']['timeLeft'] = new_state['timeLeft']
+                        
+                        # Set endTime when timer starts, clear it when timer stops
+                        if new_state['isRunning']:
+                            if 'totalTime' in new_state:
+                                # Validate totalTime
+                                total_time = new_state['totalTime']
+                                if not isinstance(total_time, (int, float)) or total_time <= 0:
+                                    total_time = 25 * 60  # Default 25 minutes if invalid
+                                
+                                room_state['timer']['totalTime'] = total_time
+                            else:
+                                room_state['timer']['totalTime'] = 25 * 60  # Default 25 minutes
+                                
+                            # Calculate and store end time
+                            end_time = time.time() + room_state['timer']['totalTime']
+                            room_state['timer']['endTime'] = end_time
+                            room_state['timer']['elapsedTime'] = 0
+                            
+                            print(f"Timer started in room {room} - end time: {end_time}")
+                        else:
+                            # Reset timer when stopping
+                            room_state['timer']['endTime'] = None
+                            room_state['timer']['elapsedTime'] = 0
+                            
+                            print(f"Timer stopped in room {room}")
+                    
+                    # Allow direct setting of endTime if provided (with validation)
+                    if 'endTime' in new_state:
+                        end_time = new_state['endTime']
+                        if isinstance(end_time, (int, float)) and end_time > 0:
+                            room_state['timer']['endTime'] = end_time
+                            print(f"End time set directly in room {room}: {end_time}")
+                        else:
+                            print(f"Ignoring invalid endTime: {end_time}")
+                        
+                    # Allow direct setting of elapsedTime if provided (with validation)
                     if 'elapsedTime' in new_state:
-                        room_state['timer']['elapsedTime'] = new_state['elapsedTime']
+                        elapsed_time = new_state['elapsedTime']
+                        if isinstance(elapsed_time, (int, float)) and elapsed_time >= 0:
+                            room_state['timer']['elapsedTime'] = elapsed_time
                     
                     # Save state after timer update
                     await save_room_states()
                     
-                    # Broadcast timer update
+                    # Broadcast timer update to all clients in the room
                     await broadcast_timer_update(room)
     except Exception as e:
         print(f"WebSocket error: {e}")
@@ -294,13 +392,13 @@ async def start_server():
     # Create and set the event loop
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    site = web.TCPSite(runner, 'localhost', 8080)
     
     # Start the timer update task
     asyncio.create_task(update_timer())
     
     await site.start()
-    print("======== Running on http://0.0.0.0:8080 ========")
+    print("======== Running on http://localhost:8080 ========")
     print("(Press CTRL+C to quit)")
     
     # Keep the server running

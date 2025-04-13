@@ -1,5 +1,5 @@
 import { initializeBoard, updateBoard, getTaskData, taskIdCounter } from './kanban.js';
-import { updateTimerState } from './pomodoro.js';
+import { updateTimerState, resetTimerState } from './pomodoro.js';
 
 let socket;
 const connectionStatus = document.getElementById('connectionStatus');
@@ -48,8 +48,20 @@ function updateRoomSelect(rooms) {
 function switchRoom(newRoom) {
     if (newRoom === currentRoomId) return;
     
+    // Instead of just updating the URL and reconnecting, force a full page reload
+    // by navigating to the new room URL
     const newUrl = new URL(window.location);
     newUrl.searchParams.set('room', newRoom);
+    
+    // Navigate to the new URL, which forces a complete page refresh
+    window.location.href = newUrl.toString();
+    
+    // Note: The code below won't execute due to the page refresh,
+    // but we'll keep it in case we need to revert this change
+    /*
+    // Reset the timer state before switching rooms
+    resetTimerState();
+    
     window.history.pushState({}, '', newUrl);
     
     currentRoomId = newRoom;
@@ -59,6 +71,7 @@ function switchRoom(newRoom) {
         socket.close();
     }
     connectWebSocket();
+    */
 }
 
 function connectWebSocket() {
