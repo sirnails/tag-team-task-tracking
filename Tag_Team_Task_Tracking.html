@@ -4,10 +4,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tag-Team Task Tracking</title>
+    <link rel="icon" href="./static/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="./static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="./static/css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Add D3.js library for workflow visualization -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Using local Font Awesome CSS - DO NOT CHANGE TO ONLINE URL -->
+    <link rel="stylesheet" href="./static/css/all.min.css">
+    <!-- Using local D3.js library - DO NOT CHANGE TO ONLINE URL -->
+    <script src="./static/js/d3.v7.min.js"></script>
     <script type="module">
         import { connectWebSocket } from './static/js/websocket.js';
         import { initializeBoard, updateBoard } from './static/js/kanban.js';
