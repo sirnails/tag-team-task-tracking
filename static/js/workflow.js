@@ -1,4 +1,6 @@
 // workflow.js - Handles the workflow tracker functionality
+import { socket } from './websocket.js';
+
 let workflowState = {
     states: [],
     transitions: [],
@@ -138,6 +140,71 @@ function setupEventListeners() {
     
     // Add event handlers for form submissions
     document.addEventListener('submit', handleFormSubmissions);
+    
+    // New: Add document-level click handlers for dynamic buttons
+    document.addEventListener('click', handleConfigButtonClicks);
+}
+
+// New function to handle clicks on dynamically created buttons in the config screen
+function handleConfigButtonClicks(e) {
+    // Handle Add State button
+    if (e.target.id === 'addStateBtn' || e.target.closest('#addStateBtn')) {
+        console.log('Add State button clicked via global handler');
+        showStateModal();
+        e.preventDefault();
+        return;
+    }
+    
+    // Handle Add Transition button
+    if (e.target.id === 'addTransitionBtn' || e.target.closest('#addTransitionBtn')) {
+        console.log('Add Transition button clicked via global handler');
+        showTransitionModal();
+        e.preventDefault();
+        return;
+    }
+    
+    // Handle Edit State buttons
+    if (e.target.classList.contains('edit-state-btn') || e.target.closest('.edit-state-btn')) {
+        const button = e.target.classList.contains('edit-state-btn') ? e.target : e.target.closest('.edit-state-btn');
+        const stateId = button.getAttribute('data-id');
+        console.log('Edit state button clicked for stateId:', stateId);
+        const state = workflowState.states.find(s => s.id === stateId);
+        if (state) showStateModal(state);
+        e.preventDefault();
+        return;
+    }
+    
+    // Handle Delete State buttons
+    if (e.target.classList.contains('delete-state-btn') || e.target.closest('.delete-state-btn')) {
+        const button = e.target.classList.contains('delete-state-btn') ? e.target : e.target.closest('.delete-state-btn');
+        const stateId = button.getAttribute('data-id');
+        console.log('Delete state button clicked for stateId:', stateId);
+        deleteState(stateId);
+        e.preventDefault();
+        return;
+    }
+    
+    // Handle Edit Transition buttons
+    if (e.target.classList.contains('edit-transition-btn') || e.target.closest('.edit-transition-btn')) {
+        const button = e.target.classList.contains('edit-transition-btn') ? e.target : e.target.closest('.edit-transition-btn');
+        const index = parseInt(button.getAttribute('data-index'));
+        console.log('Edit transition button clicked for index:', index);
+        if (index >= 0 && index < workflowState.transitions.length) {
+            showTransitionModal(workflowState.transitions[index], index);
+        }
+        e.preventDefault();
+        return;
+    }
+    
+    // Handle Delete Transition buttons
+    if (e.target.classList.contains('delete-transition-btn') || e.target.closest('.delete-transition-btn')) {
+        const button = e.target.classList.contains('delete-transition-btn') ? e.target : e.target.closest('.delete-transition-btn');
+        const index = parseInt(button.getAttribute('data-index'));
+        console.log('Delete transition button clicked for index:', index);
+        deleteTransition(index);
+        e.preventDefault();
+        return;
+    }
 }
 
 function handleFormSubmissions(e) {
@@ -556,6 +623,8 @@ function showWorkflowConfigScreen() {
     workItemDetail.style.display = 'none';
     configContainer.style.display = 'block';
     
+    console.log('Showing workflow config screen with states:', workflowState.states.length);
+    
     // Render the configuration interface
     const configHtml = `
         <div class="config-header">
@@ -621,97 +690,175 @@ function showWorkflowConfigScreen() {
     configContainer.innerHTML = configHtml;
     
     // Add event listeners
-    document.getElementById('backFromConfigBtn').addEventListener('click', () => {
-        configContainer.style.display = 'none';
-        workItemsContainer.style.display = 'block';
-    });
+    const backFromConfigBtn = document.getElementById('backFromConfigBtn');
+    if (backFromConfigBtn) {
+        backFromConfigBtn.addEventListener('click', () => {
+            configContainer.style.display = 'none';
+            workItemsContainer.style.display = 'block';
+        });
+    }
     
-    document.getElementById('addStateBtn').addEventListener('click', () => showStateModal());
+    // Add State button event handler
+    const addStateButton = document.getElementById('addStateBtn');
+    if (addStateButton) {
+        addStateButton.onclick = function(e) {
+            e.preventDefault();
+            console.log('Add State button clicked');
+            showStateModal();
+        };
+    } else {
+        console.warn('addStateBtn element not found');
+    }
     
-    document.getElementById('addTransitionBtn').addEventListener('click', () => showTransitionModal());
+    // Add Transition button event handler
+    const addTransitionButton = document.getElementById('addTransitionBtn');
+    if (addTransitionButton) {
+        addTransitionButton.onclick = function(e) {
+            e.preventDefault();
+            console.log('Add Transition button clicked');
+            showTransitionModal();
+        };
+    } else {
+        console.warn('addTransitionBtn element not found');
+    }
     
     // Add event listeners for edit/delete buttons
     document.querySelectorAll('.edit-state-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const stateId = btn.dataset.id;
+        btn.onclick = function(e) {
+            e.preventDefault();
+            const stateId = this.getAttribute('data-id');
+            console.log('Edit state button clicked for stateId:', stateId);
             const state = workflowState.states.find(s => s.id === stateId);
             if (state) showStateModal(state);
-        });
+        };
     });
     
     document.querySelectorAll('.delete-state-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const stateId = btn.dataset.id;
+        btn.onclick = function(e) {
+            e.preventDefault();
+            const stateId = this.getAttribute('data-id');
+            console.log('Delete state button clicked for stateId:', stateId);
             deleteState(stateId);
-        });
+        };
     });
     
     document.querySelectorAll('.edit-transition-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const index = parseInt(btn.dataset.index);
+        btn.onclick = function(e) {
+            e.preventDefault();
+            const index = parseInt(this.getAttribute('data-index'));
+            console.log('Edit transition button clicked for index:', index);
             if (index >= 0 && index < workflowState.transitions.length) {
                 showTransitionModal(workflowState.transitions[index], index);
             }
-        });
+        };
     });
     
     document.querySelectorAll('.delete-transition-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const index = parseInt(btn.dataset.index);
+        btn.onclick = function(e) {
+            e.preventDefault();
+            const index = parseInt(this.getAttribute('data-index'));
+            console.log('Delete transition button clicked for index:', index);
             deleteTransition(index);
-        });
+        };
     });
+    
+    console.log('Workflow config screen initialized with event listeners');
 }
 
 function showStateModal(state = null) {
     const isEditing = state !== null;
     
-    // Create the modal HTML
-    const modalHtml = `
-        <div id="stateModal" class="modal">
-            <div class="modal-content">
-                <button class="close-modal">&times;</button>
-                <div class="modal-header">
-                    <h3>${isEditing ? 'Edit State' : 'New State'}</h3>
-                </div>
-                <form id="stateForm">
-                    <input type="hidden" id="stateId" value="${isEditing ? state.id : ''}">
-                    
-                    <div class="form-group">
-                        <label for="stateName">State Name</label>
-                        <input type="text" id="stateName" value="${isEditing ? escapeHtml(state.name) : ''}" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="stateColor">Color</label>
-                        <input type="color" id="stateColor" value="${isEditing ? state.color : '#3498db'}">
-                    </div>
-                    
-                    <div class="modal-footer">
-                        <button type="button" id="cancelState" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
-                        <button type="submit" class="timer-btn"><i class="fas fa-save"></i> Save</button>
-                    </div>
-                </form>
+    console.log('showStateModal called', isEditing ? 'editing state' : 'creating new state');
+    
+    // First remove any existing modal
+    const existingModal = document.getElementById('stateModal');
+    if (existingModal) {
+        document.body.removeChild(existingModal);
+    }
+    
+    // Create the modal element directly
+    const modal = document.createElement('div');
+    modal.id = 'stateModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.zIndex = '1000';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    
+    // Set the inner HTML
+    modal.innerHTML = `
+        <div class="modal-content" style="margin: 10% auto; padding: 20px; width: 80%; max-width: 500px; background-color: white; border-radius: 8px;">
+            <button class="close-modal" style="float: right; font-size: 24px; cursor: pointer;">&times;</button>
+            <div class="modal-header">
+                <h3>${isEditing ? 'Edit State' : 'New State'}</h3>
             </div>
+            <form id="stateForm">
+                <input type="hidden" id="stateId" value="${isEditing ? state.id : ''}">
+                
+                <div class="form-group">
+                    <label for="stateName">State Name</label>
+                    <input type="text" id="stateName" value="${isEditing ? escapeHtml(state.name) : ''}" required style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="stateColor">Color</label>
+                    <input type="color" id="stateColor" value="${isEditing ? state.color : '#3498db'}" style="width: 100%; margin-bottom: 15px;">
+                </div>
+                
+                <div class="modal-footer" style="text-align: right;">
+                    <button type="button" id="cancelState" class="cancel-btn" style="padding: 8px 16px; margin-right: 10px; background-color: #ccc; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="timer-btn" style="padding: 8px 16px; background-color: #00b894; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                </div>
+            </form>
         </div>
     `;
     
-    // Add modal to the document
-    const modalContainer = document.createElement('div');
-    modalContainer.innerHTML = modalHtml;
-    document.body.appendChild(modalContainer.firstChild);
+    // Append to document body
+    document.body.appendChild(modal);
     
-    const modal = document.getElementById('stateModal');
-    modal.style.display = 'block';
+    console.log('State modal added to DOM. Element ID:', modal.id);
     
-    // Add event listeners for the modal
-    modal.querySelector('.close-modal').addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
+    // Now that the modal is in the DOM, we can safely add event listeners
+    const closeButton = modal.querySelector('.close-modal');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            console.log('Close button clicked on state modal');
+            document.body.removeChild(modal);
+        });
+    } else {
+        console.error('Could not find close button in modal');
+    }
     
-    document.getElementById('cancelState').addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
+    const cancelButton = document.getElementById('cancelState');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            console.log('Cancel button clicked on state modal');
+            document.body.removeChild(modal);
+        });
+    } else {
+        console.error('Could not find cancel button in modal');
+    }
+    
+    // Add direct form submission handler
+    const form = document.getElementById('stateForm');
+    if (form) {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            console.log('State form submitted');
+            saveStateConfig();
+            return false;
+        };
+    } else {
+        console.error('State form element not found');
+    }
 }
 
 function saveStateConfig() {
@@ -760,66 +907,111 @@ function saveStateConfig() {
 function showTransitionModal(transition = null, index = -1) {
     const isEditing = transition !== null;
     
-    // Create the modal HTML
-    const modalHtml = `
-        <div id="transitionModal" class="modal">
-            <div class="modal-content">
-                <button class="close-modal">&times;</button>
-                <div class="modal-header">
-                    <h3>${isEditing ? 'Edit Transition' : 'New Transition'}</h3>
-                </div>
-                <form id="transitionForm">
-                    <input type="hidden" id="transitionIndex" value="${index}">
-                    
-                    <div class="form-group">
-                        <label for="fromState">From State</label>
-                        <select id="fromState" required>
-                            <option value="">Select a state</option>
-                            ${workflowState.states.map(state => `
-                                <option value="${state.id}" ${isEditing && transition.from === state.id ? 'selected' : ''}>
-                                    ${escapeHtml(state.name)}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="toState">To State</label>
-                        <select id="toState" required>
-                            <option value="">Select a state</option>
-                            ${workflowState.states.map(state => `
-                                <option value="${state.id}" ${isEditing && transition.to === state.id ? 'selected' : ''}>
-                                    ${escapeHtml(state.name)}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    
-                    <div class="modal-footer">
-                        <button type="button" id="cancelTransition" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
-                        <button type="submit" class="timer-btn"><i class="fas fa-save"></i> Save</button>
-                    </div>
-                </form>
+    console.log('showTransitionModal called', isEditing ? 'editing transition' : 'creating new transition');
+    
+    // First remove any existing modal
+    const existingModal = document.getElementById('transitionModal');
+    if (existingModal) {
+        document.body.removeChild(existingModal);
+    }
+    
+    // Create the modal element directly
+    const modal = document.createElement('div');
+    modal.id = 'transitionModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.zIndex = '1000';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    
+    // Set the inner HTML
+    modal.innerHTML = `
+        <div class="modal-content" style="margin: 10% auto; padding: 20px; width: 80%; max-width: 500px; background-color: white; border-radius: 8px;">
+            <button class="close-modal" style="float: right; font-size: 24px; cursor: pointer;">&times;</button>
+            <div class="modal-header">
+                <h3>${isEditing ? 'Edit Transition' : 'New Transition'}</h3>
             </div>
+            <form id="transitionForm">
+                <input type="hidden" id="transitionIndex" value="${index}">
+                
+                <div class="form-group">
+                    <label for="fromState">From State</label>
+                    <select id="fromState" required style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Select a state</option>
+                        ${workflowState.states.map(state => `
+                            <option value="${state.id}" ${isEditing && transition.from === state.id ? 'selected' : ''}>
+                                ${escapeHtml(state.name)}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="toState">To State</label>
+                    <select id="toState" required style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Select a state</option>
+                        ${workflowState.states.map(state => `
+                            <option value="${state.id}" ${isEditing && transition.to === state.id ? 'selected' : ''}>
+                                ${escapeHtml(state.name)}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                
+                <div class="modal-footer" style="text-align: right;">
+                    <button type="button" id="cancelTransition" class="cancel-btn" style="padding: 8px 16px; margin-right: 10px; background-color: #ccc; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="timer-btn" style="padding: 8px 16px; background-color: #00b894; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                </div>
+            </form>
         </div>
     `;
     
-    // Add modal to the document
-    const modalContainer = document.createElement('div');
-    modalContainer.innerHTML = modalHtml;
-    document.body.appendChild(modalContainer.firstChild);
+    // Append to document body
+    document.body.appendChild(modal);
     
-    const modal = document.getElementById('transitionModal');
-    modal.style.display = 'block';
+    console.log('Transition modal added to DOM. Element ID:', modal.id);
     
-    // Add event listeners for the modal
-    modal.querySelector('.close-modal').addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
+    // Now that the modal is in the DOM, we can safely add event listeners
+    const closeButton = modal.querySelector('.close-modal');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            console.log('Close button clicked on transition modal');
+            document.body.removeChild(modal);
+        });
+    } else {
+        console.error('Could not find close button in modal');
+    }
     
-    document.getElementById('cancelTransition').addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
+    const cancelButton = document.getElementById('cancelTransition');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            console.log('Cancel button clicked on transition modal');
+            document.body.removeChild(modal);
+        });
+    } else {
+        console.error('Could not find cancel button in modal');
+    }
+    
+    // Add direct form submission handler
+    const form = document.getElementById('transitionForm');
+    if (form) {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            console.log('Transition form submitted');
+            saveTransitionConfig();
+            return false;
+        };
+    } else {
+        console.error('Transition form element not found');
+    }
 }
 
 function saveTransitionConfig() {
@@ -915,8 +1107,8 @@ function deleteTransition(index) {
 
 // Function to send updated workflow data to the server
 function sendWorkflowUpdate() {
-    // Ensure the socket is available (imported from websocket.js)
-    if (typeof socket !== 'undefined' && socket.readyState === WebSocket.OPEN) {
+    // Get the socket directly from the imported module
+    if (socket && socket.readyState === WebSocket.OPEN) {
         const updateData = {
             type: 'workflow_update',
             data: {
@@ -928,7 +1120,23 @@ function sendWorkflowUpdate() {
         console.log('Sending workflow update:', updateData);
         socket.send(JSON.stringify(updateData));
     } else {
-        console.warn('Cannot send workflow update - WebSocket is not connected');
+        console.warn('Cannot send workflow update - WebSocket is not connected. Will retry in 1 second.');
+        // Try again after a short delay in case the socket is reconnecting
+        setTimeout(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const updateData = {
+                    type: 'workflow_update',
+                    data: {
+                        workflow: workflowState,
+                        workItems: workItems
+                    }
+                };
+                console.log('Retrying workflow update:', updateData);
+                socket.send(JSON.stringify(updateData));
+            } else {
+                console.error('WebSocket still not connected. Workflow changes may not be synchronized.');
+            }
+        }, 1000);
     }
 }
 
