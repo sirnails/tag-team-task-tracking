@@ -40,6 +40,12 @@
                     <span id="connectionStatus" class="disconnected"><i class="fas fa-circle"></i> Disconnected</span>
                 </div>
             </div>
+            <div class="center-controls">
+                <div class="nav-tabs">
+                    <button id="kanbanLink" class="nav-tab active"><i class="fas fa-columns"></i> Kanban Board</button>
+                    <button id="workflowLink" class="nav-tab"><i class="fas fa-project-diagram"></i> Workflow</button>
+                </div>
+            </div>
             <div class="right-controls">
                 <div class="room-switcher">
                     <select id="roomSelect" class="room-select">
@@ -56,68 +62,105 @@
     </header>
 
     <div class="app-container">
-        <div class="top-section">
-            <div class="input-section">
-                <div class="input-title"><i class="fas fa-list"></i> Task Input</div>
-                <textarea id="taskInput" placeholder="Enter your tasks here, one per line..."></textarea>
-                <div class="button-group">
-                    <button id="loadTasks"><i class="fas fa-plus-circle"></i> Load Tasks</button>
-                    <button id="clearStorage" class="danger"><i class="fas fa-trash-alt"></i> Clear All</button>
+        <!-- Kanban Content - Shown by default -->
+        <div id="kanbanContent">
+            <div class="top-section">
+                <div class="input-section">
+                    <div class="input-title"><i class="fas fa-list"></i> Task Input</div>
+                    <textarea id="taskInput" placeholder="Enter your tasks here, one per line..."></textarea>
+                    <div class="button-group">
+                        <button id="loadTasks"><i class="fas fa-plus-circle"></i> Load Tasks</button>
+                        <button id="clearStorage" class="danger"><i class="fas fa-trash-alt"></i> Clear All</button>
+                    </div>
+                    
+                    <!-- Trash column positioned inside input section -->
+                    <div class="trash-column column" id="trashColumn">
+                        <h2><i class="fas fa-trash-alt"></i> Delete</h2>
+                        <div id="trashTasks" class="tasks">
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Trash column positioned inside input section -->
-                <div class="trash-column column" id="trashColumn">
-                    <h2><i class="fas fa-trash-alt"></i> Delete</h2>
-                    <div id="trashTasks" class="tasks">
+
+                <div class="pomodoro-section">
+                    <div class="current-task" id="currentTaskDisplay"><i class="fas fa-clock"></i> No task selected</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+                    </div>
+                    <div class="pomodoro-timer" id="timer">25:00</div>
+                    <div class="pomodoro-controls">
+                        <button id="pomodoroToggle" class="timer-btn"><i class="fas fa-play"></i> Start</button>
                     </div>
                 </div>
             </div>
 
-            <div class="pomodoro-section">
-                <div class="current-task" id="currentTaskDisplay"><i class="fas fa-clock"></i> No task selected</div>
-                <div class="progress-container">
-                    <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+            <main class="main-content">
+                <div class="kanban-board">
+                    <div class="column" id="todoColumn">
+                        <h2><i class="fas fa-clipboard-list"></i> Todo</h2>
+                        <div id="todoTasks" class="tasks">
+                            <div class="empty-state">Add tasks to get started</div>
+                        </div>
+                    </div>
+                    
+                    <div class="column" id="inProgressColumn">
+                        <h2><i class="fas fa-spinner"></i> In Progress</h2>
+                        <div id="inProgressTasks" class="tasks">
+                            <div class="empty-state">Tasks being worked on</div>
+                        </div>
+                    </div>
+                    
+                    <div class="column" id="doneColumn">
+                        <h2><i class="fas fa-check-circle"></i> Done</h2>
+                        <div id="doneTasks" class="tasks">
+                            <div class="empty-state">Completed tasks</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="pomodoro-timer" id="timer">25:00</div>
-                <div class="pomodoro-controls">
-                    <button id="pomodoroToggle" class="timer-btn"><i class="fas fa-play"></i> Start</button>
+            </main>
+        </div>
+
+        <!-- Workflow Content - Hidden by default -->
+        <div id="workflowContent" style="display: none;">
+            <div class="workflow-container" id="workflowContainer">
+                <!-- Work Items List View -->
+                <div id="workItemsContainer" class="workflow-section">
+                    <div class="workflow-header">
+                        <h2><i class="fas fa-tasks"></i> Work Items</h2>
+                        <div class="workflow-actions">
+                            <button id="addWorkItemBtn" class="primary-btn"><i class="fas fa-plus"></i> Add Work Item</button>
+                            <button id="manageWorkflowBtn" class="secondary-btn"><i class="fas fa-cog"></i> Configure Workflow</button>
+                        </div>
+                    </div>
+                    <div id="workItemsList" class="work-items-list">
+                        <!-- Work items will be populated here -->
+                        <div class="empty-state">No work items yet. Click "Add Work Item" to create one.</div>
+                    </div>
+                </div>
+
+                <!-- Work Item Detail View (hidden by default) -->
+                <div id="workItemDetail" class="workflow-section" style="display: none;">
+                    <!-- Work item detail will be populated here -->
+                </div>
+
+                <!-- Workflow Configuration View (hidden by default) -->
+                <div id="configContainer" class="workflow-section" style="display: none;">
+                    <!-- Configuration content will be populated here -->
                 </div>
             </div>
         </div>
-
-        <main class="main-content">
-            <div class="kanban-board">
-                <div class="column" id="todoColumn">
-                    <h2><i class="fas fa-clipboard-list"></i> Todo</h2>
-                    <div id="todoTasks" class="tasks">
-                        <div class="empty-state">Add tasks to get started</div>
-                    </div>
-                </div>
-                
-                <div class="column" id="inProgressColumn">
-                    <h2><i class="fas fa-spinner"></i> In Progress</h2>
-                    <div id="inProgressTasks" class="tasks">
-                        <div class="empty-state">Tasks being worked on</div>
-                    </div>
-                </div>
-                
-                <div class="column" id="doneColumn">
-                    <h2><i class="fas fa-check-circle"></i> Done</h2>
-                    <div id="doneTasks" class="tasks">
-                        <div class="empty-state">Completed tasks</div>
-                    </div>
-                </div>
-            </div>
-        </main>
     </div>
 
     <script type="module">
         import { connectWebSocket } from './static/js/websocket.js';
         import { initializeBoard, updateBoard } from './static/js/kanban.js';
         import { updateTimerState } from './static/js/pomodoro.js';
+        import { initializeWorkflow } from './static/js/workflow.js';
 
         document.addEventListener('DOMContentLoaded', function() {
             connectWebSocket();
+
+            // Initialize workflow with empty data (the module will create default states)
+            initializeWorkflow({});
 
             // Theme toggle functionality
             const themeToggle = document.getElementById('themeToggle');

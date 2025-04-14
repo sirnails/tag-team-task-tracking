@@ -43,6 +43,73 @@ body {
     padding-top: 4rem; /* Space for fixed header */
 }
 
+/* Header & Navigation Styles */
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--component-bg);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    padding: 0.4rem 0;
+    backdrop-filter: blur(10px);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.left-controls, .right-controls, .center-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.left-controls {
+    flex: 1;
+}
+
+.center-controls {
+    flex: 2;
+    justify-content: center;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--input-bg);
+    padding: 0.25rem;
+    border-radius: 50px;
+}
+
+.nav-tab {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.nav-tab.active {
+    background: var(--primary);
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
+}
+
+.nav-tab:hover:not(.active) {
+    background: rgba(108, 92, 231, 0.1);
+}
+
 .main-header {
     position: fixed;
     top: 0;
@@ -882,4 +949,485 @@ button:disabled:hover,
 button.disabled:hover {
     background-color: var(--gray) !important;
     transform: none !important;
+}
+
+/* Workflow Specific Styles */
+.workflow-container {
+    background: var(--component-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    min-height: 600px;
+}
+
+.workflow-section {
+    width: 100%;
+}
+
+.workflow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.workflow-header h2 {
+    margin: 0;
+    color: var(--primary);
+}
+
+.workflow-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.primary-btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.primary-btn:hover {
+    background-color: #5649c0;
+    transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background-color: var(--component-bg);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 50px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.secondary-btn:hover {
+    background-color: rgba(108, 92, 231, 0.1);
+    transform: translateY(-2px);
+}
+
+.work-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.work-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 4px solid var(--primary);
+}
+
+.work-item-row:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.work-item-title {
+    font-weight: 500;
+    flex: 1;
+}
+
+.work-item-state {
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+}
+
+/* Work Item Detail Styles */
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-header h2 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 1.75rem;
+}
+
+.workflow-status {
+    margin-bottom: 1.5rem;
+}
+
+.workflow-status h3 {
+    font-weight: 500;
+}
+
+.workflow-visualization {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.workflow-diagram {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 1rem 0;
+}
+
+.workflow-diagram::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gray);
+    z-index: 1;
+}
+
+.workflow-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 2;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    border: 2px solid transparent;
+    transition: var(--transition);
+}
+
+.workflow-state.current-state {
+    background: rgba(108, 92, 231, 0.1);
+    transform: scale(1.05);
+    border-color: inherit;
+}
+
+.state-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.state-name {
+    font-size: 0.85rem;
+    text-align: center;
+    color: var(--text-color);
+}
+
+.work-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.detail-section {
+    padding: 1.5rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.detail-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+    color: var(--primary);
+}
+
+.description-text {
+    white-space: pre-wrap;
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.state-transition-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 50px;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.state-transition-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.journal-entries {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.journal-entry {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.journal-timestamp {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-bottom: 0.25rem;
+}
+
+.journal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.journal-form textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius);
+    background: var(--component-bg);
+    color: var(--text-color);
+    resize: vertical;
+}
+
+.journal-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.journal-form button {
+    align-self: flex-end;
+}
+
+.empty-journal {
+    color: var(--gray);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Workflow Configuration Styles */
+.config-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.config-header h2 {
+    margin: 0;
+    color: var(--primary);
+}
+
+.config-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.config-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.config-table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.config-table-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.5fr;
+    padding: 0.75rem 1rem;
+    background: rgba(108, 92, 231, 0.1);
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.5fr;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.config-row:last-child {
+    border-bottom: none;
+}
+
+.config-cell {
+    display: flex;
+    align-items: center;
+}
+
+.color-sample {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0.25rem;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.icon-btn:hover {
+    background: rgba(108, 92, 231, 0.1);
+    transform: scale(1.1);
+}
+
+.delete-state-btn, .delete-transition-btn {
+    color: var(--danger);
+}
+
+.delete-state-btn:hover, .delete-transition-btn:hover {
+    background: rgba(255, 118, 117, 0.1);
+}
+
+/* Form Styles for Modals */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea,
+.form-group input[type="color"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.form-group input[type="color"] {
+    height: 40px;
+    padding: 0.25rem;
+}
+
+.form-group select {
+    cursor: pointer;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .nav-tabs {
+        width: 100%;
+    }
+    
+    .center-controls {
+        order: 3;
+        width: 100%;
+        margin-top: 0.75rem;
+    }
+    
+    .header-content {
+        flex-wrap: wrap;
+    }
+    
+    .left-controls, .right-controls {
+        flex: 1;
+    }
+    
+    .workflow-actions {
+        flex-direction: column;
+    }
+    
+    .workflow-diagram {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .workflow-diagram::before {
+        width: 2px;
+        height: 100%;
+        top: 0;
+        left: 50%;
+        right: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .config-table-header,
+    .config-row {
+        grid-template-columns: 1fr 0.5fr 0.5fr;
+    }
+    
+    .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .state-transition-btn {
+        width: 100%;
+    }
 }

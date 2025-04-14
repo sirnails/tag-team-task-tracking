@@ -21,7 +21,25 @@ def create_default_room_state():
             'elapsedTime': 0,
             'totalTime': 25 * 60  # 25 minutes in seconds
         },
-        'currentTask': None
+        'currentTask': None,
+        # Add default workflow configuration
+        'workflow': {
+            'states': [
+                {'id': 'open', 'name': 'Open', 'color': '#3498db'},
+                {'id': 'implementing', 'name': 'Implementing', 'color': '#f39c12'},
+                {'id': 'testing', 'name': 'Testing', 'color': '#9b59b6'},
+                {'id': 'done', 'name': 'Done', 'color': '#2ecc71'}
+            ],
+            'transitions': [
+                {'from': 'open', 'to': 'implementing'},
+                {'from': 'implementing', 'to': 'testing'},
+                {'from': 'testing', 'to': 'done'},
+                {'from': 'testing', 'to': 'implementing'},
+                {'from': 'implementing', 'to': 'open'}
+            ],
+            'stateIdCounter': 4
+        },
+        'workItems': []
     }
 
 # Load saved room states from file if it exists
@@ -54,6 +72,12 @@ def load_room_states():
                                 del timer['timeLeft']
                             if 'lastUpdate' in timer:
                                 del timer['lastUpdate']
+                    
+                    # Add workflow data if missing
+                    if 'workflow' not in room_data:
+                        room_data['workflow'] = create_default_room_state()['workflow']
+                    if 'workItems' not in room_data:
+                        room_data['workItems'] = []
                 
                 states.update(saved_states)
                 return states
@@ -365,6 +389,29 @@ async def handle_timer_update(ws, data, room, room_state):
     await broadcast_timer_update(room)
     return True
 
+# New handler for workflow updates
+async def handle_workflow_update(ws, data, room, room_state):
+    if 'workflow' in data['data']:
+        room_state['workflow'] = data['data']['workflow']
+    
+    if 'workItems' in data['data']:
+        room_state['workItems'] = data['data']['workItems']
+    
+    # Save state after update
+    await save_room_states()
+    
+    # Broadcast workflow update
+    for client in clients[room]:
+        if not client.closed:
+            await client.send_json({
+                'type': 'workflow_update',
+                'data': {
+                    'workflow': room_state['workflow'],
+                    'workItems': room_state['workItems']
+                }
+            })
+    return True
+
 async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -401,7 +448,9 @@ async def websocket_handler(request):
             'data': {
                 'board': room_state,
                 'timer': room_state['timer'],
-                'currentTask': current_task_data
+                'currentTask': current_task_data,
+                'workflow': room_state['workflow'],
+                'workItems': room_state['workItems']
             }
         })
         
@@ -424,6 +473,10 @@ async def websocket_handler(request):
                 
                 elif data['type'] == 'timer':
                     await handle_timer_update(ws, data, room, room_state)
+                
+                # Handle workflow updates
+                elif data['type'] == 'workflow_update':
+                    await handle_workflow_update(ws, data, room, room_state)
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:

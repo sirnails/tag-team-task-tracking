@@ -1,5 +1,6 @@
 import { initializeBoard, updateBoard, getTaskData, taskIdCounter } from './kanban.js';
 import { updateTimerState, resetTimerState } from './pomodoro.js';
+import { initializeWorkflow, updateWorkflow } from './workflow.js';
 
 let socket;
 const connectionStatus = document.getElementById('connectionStatus');
@@ -99,6 +100,13 @@ function connectWebSocket() {
                 console.log('Handling full update:', data.data);
                 initializeBoard(data.data.board);
                 updateTimerState(data.data.timer);
+                // Initialize workflow with the data from server
+                if (data.data.workflow && data.data.workItems) {
+                    initializeWorkflow({
+                        workflow: data.data.workflow,
+                        workItems: data.data.workItems
+                    });
+                }
                 break;
             case 'update':
                 console.log('Handling board update:', data.data);
@@ -107,6 +115,10 @@ function connectWebSocket() {
             case 'timer':
                 console.log('Handling timer update:', data.data);
                 updateTimerState(data.data);
+                break;
+            case 'workflow_update':
+                console.log('Handling workflow update:', data.data);
+                updateWorkflow(data.data);
                 break;
             case 'rooms':
                 console.log('Handling rooms update:', data.rooms);
@@ -229,4 +241,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Export functions for use in other modules
-export { connectWebSocket, sendUpdate, sendTimerUpdate };
+export { connectWebSocket, sendUpdate, sendTimerUpdate, socket };
