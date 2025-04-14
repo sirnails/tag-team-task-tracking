@@ -3,6 +3,7 @@ import { updateTimerState, resetTimerState } from './pomodoro.js';
 import { initializeWorkflow, updateWorkflow } from './workflow.js';
 
 let socket;
+let messageQueue = []; // Queue to store messages until connection is ready
 const connectionStatus = document.getElementById('connectionStatus');
 const currentTaskDisplay = document.getElementById('currentTaskDisplay');
 const todoTasks = document.getElementById('todoTasks');
@@ -12,6 +13,33 @@ const roomSelect = document.getElementById('roomSelect');
 const newRoomBtn = document.getElementById('newRoomBtn');
 
 let currentRoomId = window.location.search.split('room=')[1] || 'default';
+
+// Helper function to safely send WebSocket messages
+function safeSend(message) {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(message);
+        return true;
+    } else if (socket && socket.readyState === WebSocket.CONNECTING) {
+        // If still connecting, add to queue
+        console.log('WebSocket still connecting, queueing message');
+        messageQueue.push(message);
+        return false;
+    } else {
+        console.warn('Cannot send message - WebSocket is not connected');
+        return false;
+    }
+}
+
+// Process any queued messages
+function processQueue() {
+    if (messageQueue.length > 0 && socket && socket.readyState === WebSocket.OPEN) {
+        console.log(`Processing ${messageQueue.length} queued messages`);
+        messageQueue.forEach(message => {
+            socket.send(message);
+        });
+        messageQueue = [];
+    }
+}
 
 function updateRoomSelect(rooms) {
     // Clear existing options except default
@@ -88,8 +116,11 @@ function connectWebSocket() {
         connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Connected';
         connectionStatus.className = 'connected';
         
-        // Request available rooms
-        socket.send(JSON.stringify({ type: 'get_rooms' }));
+        // Request available rooms - using safeSend now
+        safeSend(JSON.stringify({ type: 'get_rooms' }));
+        
+        // Process any queued messages
+        processQueue();
     };
     
     socket.onmessage = (event) => {
@@ -176,14 +207,13 @@ function requestRoomDeletion() {
     if (currentRoomId === 'default') return;
     
     if (confirm(`Are you sure you want to leave and delete room "${currentRoomId}"?`)) {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            // Send deletion request before switching rooms
-            socket.send(JSON.stringify({
-                type: 'delete_room_request',
-                room: currentRoomId
-            }));
-            
-            // Immediately switch to default room
+        const deleteMsg = JSON.stringify({
+            type: 'delete_room_request',
+            room: currentRoomId
+        });
+        
+        if (safeSend(deleteMsg)) {
+            // Only switch to default room if message was sent successfully
             switchRoom('default');
         }
     }
@@ -195,40 +225,32 @@ function handleRoomDeletionRequest(requestingUser) {
 }
 
 function sendUpdate() {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        const updateData = {
-            type: 'update',
-            data: {
-                todo: getTaskData(todoTasks),
-                inProgress: getTaskData(inProgressTasks),
-                done: getTaskData(doneTasks),
-                taskIdCounter: taskIdCounter,
-                currentTask: inProgressTasks.children.length > 0 && 
-                        !inProgressTasks.firstChild.classList.contains('empty-state') ? 
-                        { 
-                            id: inProgressTasks.firstChild.id, 
-                            text: inProgressTasks.firstChild.querySelector('.task-title').textContent 
-                        } : null
-            }
-        };
-        console.log('Sending board update:', updateData);
-        socket.send(JSON.stringify(updateData));
-    } else {
-        console.warn('Cannot send update - WebSocket is not connected');
-    }
+    const updateData = {
+        type: 'update',
+        data: {
+            todo: getTaskData(todoTasks),
+            inProgress: getTaskData(inProgressTasks),
+            done: getTaskData(doneTasks),
+            taskIdCounter: taskIdCounter,
+            currentTask: inProgressTasks.children.length > 0 && 
+                    !inProgressTasks.firstChild.classList.contains('empty-state') ? 
+                    { 
+                        id: inProgressTasks.firstChild.id, 
+                        text: inProgressTasks.firstChild.querySelector('.task-title').textContent 
+                    } : null
+        }
+    };
+    console.log('Sending board update:', updateData);
+    safeSend(JSON.stringify(updateData));
 }
 
 function sendTimerUpdate(timerState) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        const timerData = {
-            type: 'timer',
-            data: timerState
-        };
-        console.log('Sending timer update:', timerData);
-        socket.send(JSON.stringify(timerData));
-    } else {
-        console.warn('Cannot send timer update - WebSocket is not connected');
-    }
+    const timerData = {
+        type: 'timer',
+        data: timerState
+    };
+    console.log('Sending timer update:', timerData);
+    safeSend(JSON.stringify(timerData));
 }
 
 // Add event listener for delete button

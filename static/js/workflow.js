@@ -378,22 +378,259 @@ function showWorkItemDetail(itemId) {
 }
 
 function generateWorkflowVisualization(currentStateId) {
-    // Create a visual representation of the workflow with the current state highlighted
-    let html = '<div class="workflow-diagram">';
+    // Create a unique ID for this graph instance
+    const graphId = `workflow-graph-${Date.now()}`;
     
-    workflowState.states.forEach(state => {
-        const isCurrentState = state.id === currentStateId;
-        const stateClass = isCurrentState ? 'workflow-state current-state' : 'workflow-state';
-        
-        html += `
-            <div class="${stateClass}" style="border-color: ${state.color}">
-                <div class="state-dot" style="background-color: ${state.color}"></div>
-                <div class="state-name">${escapeHtml(state.name)}</div>
-            </div>
-        `;
-    });
+    // Set up the container for the force-directed graph
+    const html = `
+        <div class="workflow-graph-container">
+            <svg id="${graphId}" class="workflow-graph" width="100%" height="300"></svg>
+        </div>
+    `;
     
-    html += '</div>';
+    // First, insert the HTML into the DOM
+    const container = document.querySelector('.workflow-visualization');
+    if (container) {
+        container.innerHTML = html;
+    } else {
+        console.error('Workflow visualization container not found');
+        return '<div class="error-message">Visualization container not found</div>';
+    }
+    
+    // Counter to limit retry attempts
+    let retryCount = 0;
+    const maxRetries = 5; // Increased from 3 to 5
+    
+    // Function to handle the visualization with limited retries
+    function setupVisualization() {
+        try {
+            // Create a force-directed graph using D3.js
+            const svg = d3.select(`#${graphId}`);
+            
+            // Check if the SVG element exists in the DOM
+            if (!svg.node()) {
+                retryCount++;
+                if (retryCount <= maxRetries) {
+                    console.warn(`SVG element not found in DOM yet, visualization will be retried (${retryCount}/${maxRetries})`);
+                    setTimeout(setupVisualization, 300); // Increased delay between retries
+                    return;
+                } else {
+                    console.error('Max retries reached, showing fallback visualization');
+                    // Insert a fallback visualization directly into the container
+                    if (container) {
+                        container.innerHTML = `
+                            <div class="fallback-visualization" style="text-align: center; padding: 50px 20px; background: #f8f9fa; border-radius: 8px;">
+                                <h4>Visualization temporarily unavailable</h4>
+                                <p>Current status: ${currentStateId}</p>
+                                <p>Available states: ${workflowState.states.map(s => s.name).join(' → ')}</p>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+            }
+            
+            // Clear any existing content in the SVG to prevent duplicates
+            svg.selectAll("*").remove();
+            
+            // Make sure we can get the dimensions
+            const svgNode = svg.node();
+            if (!svgNode || !svgNode.getBoundingClientRect) {
+                throw new Error('SVG node does not have getBoundingClientRect method');
+            }
+            
+            // Get dimensions with fallbacks in case of error
+            let width, height;
+            try {
+                const rect = svgNode.getBoundingClientRect();
+                width = rect.width || 600; // Fallback width
+                height = parseInt(svg.attr('height')) || 300; // Fallback height
+            } catch (e) {
+                console.warn('Error getting SVG dimensions, using fallbacks', e);
+                width = 600;
+                height = 300;
+            }
+            
+            // Create nodes for each workflow state
+            const nodes = workflowState.states.map(state => ({
+                id: state.id,
+                name: state.name,
+                color: state.color,
+                radius: state.id === currentStateId ? 30 : 25, // Make current state slightly larger
+                current: state.id === currentStateId,
+                // Initialize with a fixed position if not set to allow the simulation to position initially
+                // but will become fixed after dragging
+                fx: null,
+                fy: null
+            }));
+            
+            // Handle edge case of no nodes
+            if (nodes.length === 0) {
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .text("No workflow states defined");
+                return;
+            }
+            
+            // Find valid transitions for the current state
+            const validTransitionsFromCurrent = workflowState.transitions.filter(t => 
+                t.from === currentStateId
+            );
+            
+            // Create links between states based on transitions
+            const links = workflowState.transitions.map(transition => ({
+                source: transition.from,
+                target: transition.to,
+                isValid: validTransitionsFromCurrent.some(t => 
+                    t.from === transition.from && t.to === transition.to
+                )
+            }));
+            
+            // Handle edge case of simulation with only one node
+            if (nodes.length === 1) {
+                // Just draw the single node in the center
+                svg.append("circle")
+                    .attr("cx", width / 2)
+                    .attr("cy", height / 2)
+                    .attr("r", 30)
+                    .attr("fill", nodes[0].color);
+                
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("dy", ".35em")
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#fff")
+                    .attr("pointer-events", "none")
+                    .text(nodes[0].name);
+                return;
+            }
+            
+            // Set up the physics simulation with reduced forces
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(120))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collide", d3.forceCollide().radius(d => d.radius + 10).iterations(2))
+                .alphaDecay(0.03); // Slower decay for initial setup
+            
+            // Create the link elements with valid transitions highlighted
+            const link = svg.append("g")
+                .attr("class", "links")
+                .selectAll("line")
+                .data(links)
+                .enter()
+                .append("line")
+                .attr("class", d => `workflow-link ${d.isValid ? 'valid-transition' : ''}`)
+                .attr("stroke", d => d.isValid ? "#00b894" : "#999") // Valid links in secondary color
+                .attr("stroke-opacity", d => d.isValid ? 0.8 : 0.4) // Valid links more visible
+                .attr("stroke-width", d => d.isValid ? 3 : 2);   // Valid links thicker
+                
+            // Add arrowheads to show direction
+            svg.append("defs").selectAll("marker")
+                .data(["end-regular", "end-valid"])
+                .enter().append("marker")
+                .attr("id", d => d)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 28)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", d => d === "end-valid" ? "#00b894" : "#999");
+                
+            // Apply appropriate arrow marker to each link
+            link.attr("marker-end", d => d.isValid ? "url(#end-valid)" : "url(#end-regular)");
+            
+            // Create a group for each node
+            const node = svg.append("g")
+                .attr("class", "nodes")
+                .selectAll(".node")
+                .data(nodes)
+                .enter()
+                .append("g")
+                .attr("class", d => `node ${d.current ? 'current-node' : ''}`)
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+            
+            // Add circle for each node with pulse animation for current state
+            node.append("circle")
+                .attr("r", d => d.radius)
+                .attr("fill", d => d.color)
+                .attr("stroke", d => d.current ? "#fff" : "none")
+                .attr("stroke-width", d => d.current ? 2 : 0)
+                .attr("class", d => d.current ? "pulse" : "");
+                
+            // Add text labels for each node
+            node.append("text")
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .attr("fill", "#fff")
+                .attr("font-weight", d => d.current ? "bold" : "normal")
+                .attr("pointer-events", "none")
+                .text(d => d.name);
+            
+            // Update positions in the simulation
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                
+                node.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+            
+            // Functions to handle dragging behavior
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.1).restart();
+                // Just set position during drag, don't set fixed position yet
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                // Update position during drag
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                // Keep the node fixed at its final position
+                // Don't reset d.fx and d.fy to null
+            }
+            
+            // Stop the simulation after initial settling
+            setTimeout(() => {
+                simulation.alpha(0).stop();
+            }, 1500);
+        } catch (error) {
+            console.error('Error generating workflow visualization:', error);
+            
+            // Provide a fallback visualization if there's an error
+            if (container) {
+                container.innerHTML = `
+                    <div class="fallback-visualization" style="text-align: center; padding: 50px 20px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>Visualization error</h4>
+                        <p>An error occurred while rendering the workflow visualization.</p>
+                        <p>Error details: ${error.message}</p>
+                        <p>Current state: ${currentStateId}</p>
+                    </div>
+                `;
+            }
+        }
+    }
+    
+    // Start the visualization process with a slight delay to allow DOM rendering
+    setTimeout(setupVisualization, 300);
+    
     return html;
 }
 
