@@ -1525,3 +1525,50 @@ button.disabled:hover {
         font-size: 10px;
     }
 }
+
+/* Workflow controls for zoom and reset */
+.workflow-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.workflow-btn {
+    background-color: var(--component-bg);
+    color: var(--primary);
+    border: 1px solid var(--primary-light);
+    border-radius: 50px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.workflow-btn:hover {
+    background-color: rgba(108, 92, 231, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.workflow-btn i {
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .workflow-controls {
+        top: 5px;
+        right: 5px;
+    }
+    
+    .workflow-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+    }
+}

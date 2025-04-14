@@ -384,6 +384,10 @@ function generateWorkflowVisualization(currentStateId) {
     // Set up the container for the force-directed graph
     const html = `
         <div class="workflow-graph-container">
+            <div class="workflow-controls">
+                <button id="fitViewBtn" class="workflow-btn" title="Zoom to fit all states"><i class="fas fa-search"></i> Fit All</button>
+                <button id="resetPositionsBtn" class="workflow-btn" title="Reset state positions"><i class="fas fa-undo"></i> Reset Layout</button>
+            </div>
             <svg id="${graphId}" class="workflow-graph" width="100%" height="300"></svg>
         </div>
     `;
@@ -451,6 +455,24 @@ function generateWorkflowVisualization(currentStateId) {
                 height = 300;
             }
             
+            // Create a group that will contain all visualization elements
+            // We'll apply zoom and pan transformations to this group
+            const g = svg.append("g")
+                .attr("class", "zoom-container");
+            
+            // Create zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.2, 5]) // Allow zooming from 0.2x to 5x
+                .on("zoom", (event) => {
+                    // Apply the zoom/pan transformation to the container group
+                    g.attr("transform", event.transform);
+                });
+            
+            // Apply zoom behavior to the SVG
+            svg.call(zoom)
+                // Initial reset to center the view
+                .call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8));
+                
             // Create nodes for each workflow state
             const nodes = workflowState.states.map(state => ({
                 id: state.id,
@@ -466,9 +488,9 @@ function generateWorkflowVisualization(currentStateId) {
             
             // Handle edge case of no nodes
             if (nodes.length === 0) {
-                svg.append("text")
-                    .attr("x", width / 2)
-                    .attr("y", height / 2)
+                g.append("text")
+                    .attr("x", 0)
+                    .attr("y", 0)
                     .attr("text-anchor", "middle")
                     .text("No workflow states defined");
                 return;
@@ -491,15 +513,15 @@ function generateWorkflowVisualization(currentStateId) {
             // Handle edge case of simulation with only one node
             if (nodes.length === 1) {
                 // Just draw the single node in the center
-                svg.append("circle")
-                    .attr("cx", width / 2)
-                    .attr("cy", height / 2)
+                g.append("circle")
+                    .attr("cx", 0)
+                    .attr("cy", 0)
                     .attr("r", 30)
                     .attr("fill", nodes[0].color);
                 
-                svg.append("text")
-                    .attr("x", width / 2)
-                    .attr("y", height / 2)
+                g.append("text")
+                    .attr("x", 0)
+                    .attr("y", 0)
                     .attr("dy", ".35em")
                     .attr("text-anchor", "middle")
                     .attr("fill", "#fff")
@@ -512,12 +534,12 @@ function generateWorkflowVisualization(currentStateId) {
             const simulation = d3.forceSimulation(nodes)
                 .force("link", d3.forceLink(links).id(d => d.id).distance(120))
                 .force("charge", d3.forceManyBody().strength(-300))
-                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("center", d3.forceCenter(0, 0))
                 .force("collide", d3.forceCollide().radius(d => d.radius + 10).iterations(2))
                 .alphaDecay(0.03); // Slower decay for initial setup
             
             // Create the link elements with valid transitions highlighted
-            const link = svg.append("g")
+            const link = g.append("g")
                 .attr("class", "links")
                 .selectAll("line")
                 .data(links)
@@ -529,7 +551,7 @@ function generateWorkflowVisualization(currentStateId) {
                 .attr("stroke-width", d => d.isValid ? 3 : 2);   // Valid links thicker
                 
             // Add arrowheads to show direction
-            svg.append("defs").selectAll("marker")
+            g.append("defs").selectAll("marker")
                 .data(["end-regular", "end-valid"])
                 .enter().append("marker")
                 .attr("id", d => d)
@@ -547,7 +569,7 @@ function generateWorkflowVisualization(currentStateId) {
             link.attr("marker-end", d => d.isValid ? "url(#end-valid)" : "url(#end-regular)");
             
             // Create a group for each node
-            const node = svg.append("g")
+            const node = g.append("g")
                 .attr("class", "nodes")
                 .selectAll(".node")
                 .data(nodes)
@@ -607,9 +629,80 @@ function generateWorkflowVisualization(currentStateId) {
                 // Don't reset d.fx and d.fy to null
             }
             
+            // Function to fit the graph to view all nodes
+            function fitView() {
+                if (nodes.length === 0) return;
+                
+                // Calculate bounds
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                
+                nodes.forEach(node => {
+                    minX = Math.min(minX, node.x || 0);
+                    minY = Math.min(minY, node.y || 0);
+                    maxX = Math.max(maxX, node.x || 0);
+                    maxY = Math.max(maxY, node.y || 0);
+                });
+                
+                // Add padding
+                const padding = 50;
+                minX -= padding;
+                minY -= padding;
+                maxX += padding;
+                maxY += padding;
+                
+                // Calculate width and height of content
+                const contentWidth = maxX - minX;
+                const contentHeight = maxY - minY;
+                
+                // Calculate scale to fit
+                const scale = Math.min(
+                    width / contentWidth,
+                    height / contentHeight,
+                    1.5 // Maximum scale factor
+                );
+                
+                // Calculate center point
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+                
+                // Create transform that centers and scales to fit
+                const transform = d3.zoomIdentity
+                    .translate(width / 2, height / 2)
+                    .scale(scale)
+                    .translate(-centerX, -centerY);
+                
+                // Apply the transform
+                svg.transition()
+                   .duration(750)
+                   .call(zoom.transform, transform);
+            }
+            
+            // Function to reset node positions
+            function resetPositions() {
+                // Resume simulation with increased energy
+                simulation.alpha(0.5).restart();
+                
+                // Remove fixed positions from all nodes
+                nodes.forEach(node => {
+                    node.fx = null;
+                    node.fy = null;
+                });
+                
+                // After settling, stop the simulation again
+                setTimeout(() => {
+                    simulation.alpha(0).stop();
+                }, 1500);
+            }
+            
+            // Add event listeners to the control buttons
+            document.getElementById('fitViewBtn').addEventListener('click', fitView);
+            document.getElementById('resetPositionsBtn').addEventListener('click', resetPositions);
+            
             // Stop the simulation after initial settling
             setTimeout(() => {
                 simulation.alpha(0).stop();
+                // Auto-fit view on initial load
+                fitView();
             }, 1500);
         } catch (error) {
             console.error('Error generating workflow visualization:', error);
