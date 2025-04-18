@@ -480,10 +480,12 @@ function generateWorkflowVisualization(currentStateId) {
                 color: state.color,
                 radius: 30, // Set all nodes to the same radius (30)
                 current: state.id === currentStateId,
-                // Initialize with a fixed position if not set to allow the simulation to position initially
-                // but will become fixed after dragging
-                fx: null,
-                fy: null
+                // Set position from stored state position if available
+                x: state.position?.x,
+                y: state.position?.y,
+                // Initialize with a fixed position if position is stored
+                fx: state.position?.x || null,
+                fy: state.position?.y || null
             }));
             
             // Handle edge case of no nodes
@@ -653,7 +655,18 @@ function generateWorkflowVisualization(currentStateId) {
             function dragended(event, d) {
                 if (!event.active) simulation.alphaTarget(0);
                 // Keep the node fixed at its final position
-                // Don't reset d.fx and d.fy to null
+                // Store the position in the corresponding state object
+                const stateObj = workflowState.states.find(s => s.id === d.id);
+                if (stateObj) {
+                    // Save the position in the state object
+                    stateObj.position = {
+                        x: d.x,
+                        y: d.y
+                    };
+                    
+                    // Send update to server to persist the positions
+                    sendWorkflowUpdate();
+                }
             }
             
             // Function to fit the graph to view all nodes
