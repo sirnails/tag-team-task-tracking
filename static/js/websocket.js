@@ -14,6 +14,11 @@ const newRoomBtn = document.getElementById('newRoomBtn');
 
 let currentRoomId = window.location.search.split('room=')[1] || 'default';
 
+// Add reconnection handling
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+const reconnectDelay = 2000; // Start with 2 seconds
+
 // Helper function to safely send WebSocket messages
 function safeSend(message) {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -84,26 +89,9 @@ function switchRoom(newRoom) {
     
     // Navigate to the new URL, which forces a complete page refresh
     window.location.href = newUrl.toString();
-    
-    // Note: The code below won't execute due to the page refresh,
-    // but we'll keep it in case we need to revert this change
-    /*
-    // Reset the timer state before switching rooms
-    resetTimerState();
-    
-    window.history.pushState({}, '', newUrl);
-    
-    currentRoomId = newRoom;
-    
-    // Reconnect websocket for new room
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
-    }
-    connectWebSocket();
-    */
 }
 
-function connectWebSocket() {
+function setupSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = 'localhost:8080';
     const wsUrl = `${protocol}//${host}/ws?room=${currentRoomId}`;
@@ -116,6 +104,12 @@ function connectWebSocket() {
         connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Connected';
         connectionStatus.className = 'connected';
         
+        reconnectAttempts = 0; // Reset reconnect counter on successful connection
+        
+        // Notify application that connection is established/re-established
+        const event = new CustomEvent('websocket-connected');
+        document.dispatchEvent(event);
+
         // Request available rooms - using safeSend now
         safeSend(JSON.stringify({ type: 'get_rooms' }));
         
@@ -177,7 +171,23 @@ function connectWebSocket() {
         console.log('Disconnected from WebSocket server. Code:', event.code, 'Reason:', event.reason);
         connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Disconnected';
         connectionStatus.className = 'disconnected';
-        setTimeout(connectWebSocket, 5000);
+
+        if (reconnectAttempts < maxReconnectAttempts) {
+            // Exponential backoff for reconnect
+            const delay = reconnectDelay * Math.pow(1.5, reconnectAttempts);
+            reconnectAttempts++;
+            
+            console.log(`Reconnect attempt ${reconnectAttempts} in ${delay}ms`);
+            setTimeout(function() {
+                // Create a new socket connection
+                setupSocket();
+            }, delay);
+        } else {
+            console.error('Maximum reconnection attempts reached');
+            // Notify user that connection is lost
+            const event = new CustomEvent('websocket-reconnect-failed');
+            document.dispatchEvent(event);
+        }
     };
     
     socket.onerror = (error) => {
@@ -262,5 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Initialize WebSocket connection
+setupSocket();
+
 // Export functions for use in other modules
-export { connectWebSocket, sendUpdate, sendTimerUpdate, socket };
+export { setupSocket as connectWebSocket, sendUpdate, sendTimerUpdate, socket };
