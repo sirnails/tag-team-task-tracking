@@ -818,7 +818,17 @@ function createWorkflowVisualization(container, currentStateId) {
                 .attr("fill", d => d.color)
                 .attr("stroke", d => d.current ? "#fff" : "none")
                 .attr("stroke-width", d => d.current ? 2 : 0)
-                .attr("class", d => d.current ? "pulse" : "");
+                .attr("class", d => d.current ? "pulse" : "")
+                .attr("title", d => (d.fx !== null && d.fy !== null) ? "Right-click to unpin" : "Drag to reposition")
+                .on("contextmenu", function(event, d) {
+                    // Prevent the default context menu
+                    event.preventDefault();
+                    
+                    // If the node is pinned (has fixed position), release it
+                    if (d.fx !== null && d.fy !== null) {
+                        releaseNode(d.id);
+                    }
+                });
             
             // Add text labels
             node.append("text")
@@ -866,6 +876,10 @@ function createWorkflowVisualization(container, currentStateId) {
                 const stateObj = workflowState.states.find(s => s.id === d.id);
                 if (stateObj) {
                     stateObj.position = { x: d.x, y: d.y };
+                    
+                    // Update node appearance to show it's pinned
+                    d.isPinned = true;
+                    updateNodeAppearance(d);
                     
                     setTimeout(() => {
                         if (!isDragging) {
@@ -923,11 +937,62 @@ function createWorkflowVisualization(container, currentStateId) {
                 nodes.forEach(node => {
                     node.fx = null;
                     node.fy = null;
+                    
+                    // Also update the stored positions in the workflow state
+                    const stateObj = workflowState.states.find(s => s.id === node.id);
+                    if (stateObj) {
+                        delete stateObj.position;
+                    }
                 });
                 
                 setTimeout(() => {
                     simulation.alpha(0).stop();
+                    sendWorkflowUpdate();
                 }, 1500);
+            }
+            
+            // Function to release a single node from its fixed position
+            function releaseNode(nodeId) {
+                const node = nodes.find(n => n.id === nodeId);
+                if (node) {
+                    // Release the node from its fixed position
+                    node.fx = null;
+                    node.fy = null;
+                    
+                    // Update the stored position in the workflow state
+                    const stateObj = workflowState.states.find(s => s.id === nodeId);
+                    if (stateObj) {
+                        delete stateObj.position;
+                    }
+                    
+                    // Restart the simulation briefly
+                    simulation.alpha(0.3).restart();
+                    
+                    // Update the circle appearance/title
+                    node.isPinned = false;
+                    updateNodeAppearance(node);
+                    
+                    // Send the update to the server
+                    sendWorkflowUpdate();
+                    
+                    // Stop the simulation after a short time
+                    setTimeout(() => {
+                        simulation.alpha(0).stop();
+                    }, 1000);
+                }
+            }
+            
+            // Function to update a node's appearance based on its pinned state
+            function updateNodeAppearance(d) {
+                const nodeCircle = node.filter(n => n.id === d.id)
+                    .select("circle");
+                
+                // Update the title/tooltip
+                if (d.fx !== null && d.fy !== null) {
+                    nodeCircle.attr("title", "Right-click to unpin");
+                } else {
+                    nodeCircle.attr("title", "Drag to reposition");
+                }
             }
             
             // Add event listeners to buttons
