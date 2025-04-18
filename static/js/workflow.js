@@ -478,7 +478,7 @@ function generateWorkflowVisualization(currentStateId) {
                 id: state.id,
                 name: state.name,
                 color: state.color,
-                radius: state.id === currentStateId ? 30 : 25, // Make current state slightly larger
+                radius: 30, // Set all nodes to the same radius (30)
                 current: state.id === currentStateId,
                 // Initialize with a fixed position if not set to allow the simulation to position initially
                 // but will become fixed after dragging
@@ -524,8 +524,6 @@ function generateWorkflowVisualization(currentStateId) {
                     .attr("y", 0)
                     .attr("dy", ".35em")
                     .attr("text-anchor", "middle")
-                    .attr("fill", "#fff")
-                    .attr("pointer-events", "none")
                     .text(nodes[0].name);
                 return;
             }
@@ -548,18 +546,18 @@ function generateWorkflowVisualization(currentStateId) {
                 .attr("class", d => `workflow-link ${d.isValid ? 'valid-transition' : ''}`)
                 .attr("stroke", d => d.isValid ? "#00b894" : "#999") // Valid links in secondary color
                 .attr("stroke-opacity", d => d.isValid ? 0.8 : 0.4) // Valid links more visible
-                .attr("stroke-width", d => d.isValid ? 3 : 2);   // Valid links thicker
+                .attr("stroke-width", 2); // Fixed consistent width for all links
                 
-            // Add arrowheads to show direction
+            // Add arrowheads to show direction - using a custom function that calculates the correct position
             g.append("defs").selectAll("marker")
                 .data(["end-regular", "end-valid"])
                 .enter().append("marker")
                 .attr("id", d => d)
                 .attr("viewBox", "0 -5 10 10")
-                .attr("refX", 28)
+                .attr("refX", 0) // Set to 0, as we'll manually calculate the position
                 .attr("refY", 0)
-                .attr("markerWidth", 6)
-                .attr("markerHeight", 6)
+                .attr("markerWidth", 10)
+                .attr("markerHeight", 10)
                 .attr("orient", "auto")
                 .append("path")
                 .attr("d", "M0,-5L10,0L0,5")
@@ -567,6 +565,45 @@ function generateWorkflowVisualization(currentStateId) {
                 
             // Apply appropriate arrow marker to each link
             link.attr("marker-end", d => d.isValid ? "url(#end-valid)" : "url(#end-regular)");
+            
+            // Calculate the proper ending points for each line to ensure arrows touch circle edge
+            function updateLinkPositions() {
+                link.each(function(d) {
+                    // Get the actual source and target nodes
+                    const sourceNode = nodes.find(n => n.id === d.source.id);
+                    const targetNode = nodes.find(n => n.id === d.target.id);
+                    
+                    if (!sourceNode || !targetNode) return;
+                    
+                    // Calculate the angle between source and target
+                    const dx = targetNode.x - sourceNode.x;
+                    const dy = targetNode.y - sourceNode.y;
+                    const angle = Math.atan2(dy, dx);
+                    
+                    // Calculate the position on the circle's edge
+                    // Add an offset of 5px to ensure the arrow head stays completely outside the circle
+                    const targetX = targetNode.x - (targetNode.radius + 25) * Math.cos(angle);
+                    const targetY = targetNode.y - (targetNode.radius + 25) * Math.sin(angle);
+                    
+                    // Update the link's end point
+                    d3.select(this)
+                        .attr("x2", targetX)
+                        .attr("y2", targetY);
+                });
+            }
+            
+            // Add updateLinkPositions to the tick function
+            simulation.on("tick", () => {
+                // Update node positions
+                node.attr("transform", d => `translate(${d.x},${d.y})`);
+                
+                // Update link source positions
+                link.attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y);
+                
+                // Calculate and update proper link end positions to touch circle edges
+                updateLinkPositions();
+            });
             
             // Create a group for each node
             const node = g.append("g")
@@ -596,18 +633,8 @@ function generateWorkflowVisualization(currentStateId) {
                 .attr("fill", "#fff")
                 .attr("font-weight", d => d.current ? "bold" : "normal")
                 .attr("pointer-events", "none")
-                .text(d => d.name);
-            
-            // Update positions in the simulation
-            simulation.on("tick", () => {
-                link
-                    .attr("x1", d => d.source.x)
-                    .attr("y1", d => d.source.y)
-                    .attr("x2", d => d.target.x)
-                    .attr("y2", d => d.target.y);
-                
-                node.attr("transform", d => `translate(${d.x},${d.y})`);
-            });
+                .attr("font-size", "12px")
+                .text(d => d.name); // Simply display the text once, without any word wrapping
             
             // Functions to handle dragging behavior
             function dragstarted(event, d) {
@@ -1508,6 +1535,8 @@ export function updateWorkflow(data) {
 // Helper function to escape HTML to prevent XSS
 function escapeHtml(unsafe) {
     if (typeof unsafe !== 'string') return '';
+    // NOTE: Be careful with regex syntax! Use single forward slashes like /</g, NOT double forward slashes //</g
+    // Double forward slashes will cause "g is not defined" errors
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
