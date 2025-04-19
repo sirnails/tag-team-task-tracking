@@ -560,17 +560,84 @@ if (DOM.buttons.clearStorage) {
 
 // Export the functions for testing
 window.testExports = {
+    // Board functions
     initializeBoard,
     updateBoard,
     getTaskData,
-    createTaskElement,
-    getDefaultEmptyText,
     resetColumn,
     loadTasksToColumn,
+    getDefaultEmptyText,
+    updateCurrentTaskDisplay,
+    
+    // Task functions
+    createTaskElement,
     makeDraggable,
+    
+    // Drag and drop functions
     getDragAfterElement,
     handleDrop,
+    showTrashColumn,
+    hideTrashColumn,
+    createDragGhost,
+    setupDragAndDrop,
+    setupTrashColumn,
+    
+    // Modal and editing functions
     openEditModal,
     closeEditModal,
-    saveTaskDetails
+    saveTaskDetails,
+    
+    // Utility functions for testing
+    getTasksState: function() {
+        return {
+            todo: getTaskData(DOM.columns.todo),
+            inProgress: getTaskData(DOM.columns.inProgress),
+            done: getTaskData(DOM.columns.done),
+            taskIdCounter: window.taskIdCounter
+        };
+    },
+    
+    // Helper functions for testing events
+    simulateDragStart: function(taskElement, dataTransfer = {}) {
+        const data = {};
+        const dt = {
+            setData: (type, val) => { data[type] = val; },
+            getData: (type) => data[type],
+            ...dataTransfer
+        };
+        
+        const dragStartEvent = new Event('dragstart', { bubbles: true });
+        dragStartEvent.dataTransfer = dt;
+        taskElement.dispatchEvent(dragStartEvent);
+        
+        return data;
+    },
+    
+    simulateDragOver: function(column, clientY) {
+        const dragOverEvent = new Event('dragover', { bubbles: true });
+        dragOverEvent.preventDefault = () => {};
+        dragOverEvent.clientY = clientY;
+        column.dispatchEvent(dragOverEvent);
+    },
+    
+    simulateDrop: function(column, dataTransfer = {}) {
+        const data = {};
+        const dt = {
+            setData: (type, val) => { data[type] = val; },
+            getData: (type) => data[type] || dataTransfer[type],
+            ...dataTransfer
+        };
+        
+        const dropEvent = new Event('drop', { bubbles: true });
+        dropEvent.dataTransfer = dt;
+        dropEvent.preventDefault = () => {};
+        dropEvent.stopPropagation = () => {};
+        column.dispatchEvent(dropEvent);
+    },
+    
+    // Mock DOM events
+    simulateClick: function(element) {
+        const clickEvent = new Event('click', { bubbles: true });
+        element.dispatchEvent(clickEvent);
+    }
 };

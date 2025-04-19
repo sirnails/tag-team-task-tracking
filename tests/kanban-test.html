@@ -233,6 +233,339 @@
                 assertEqual(taskData[0].text, 'Test Task', 'Should have correct text');
                 assertEqual(taskData[0].details, 'Test Details', 'Should have correct details');
             });
+            
+            // NEW TESTS ADDED BELOW
+            
+            // Test loading tasks to column
+            test('Load Tasks To Column', () => {
+                const column = document.createElement('div');
+                const tasks = [
+                    { id: 'task-a', text: 'Task A', details: '' },
+                    { id: 'task-b', text: 'Task B', details: 'Details B' }
+                ];
+                
+                window.testExports.loadTasksToColumn(column, tasks);
+                
+                assertEqual(column.children.length, 2, 'Should have two tasks');
+                assertEqual(column.children[0].id, 'task-a', 'First task should have correct ID');
+                assertEqual(column.children[1].id, 'task-b', 'Second task should have correct ID');
+                assertEqual(column.children[1].querySelector('.task-details').textContent, 'Details B', 'Should have correct details');
+            });
+            
+            // Test displaying current task
+            test('Update Current Task Display', () => {
+                // Create a task in progress
+                const task = window.testExports.createTaskElement('Current Task');
+                task.id = 'task-current';
+                document.getElementById('inProgressTasks').innerHTML = '';
+                document.getElementById('inProgressTasks').appendChild(task);
+                
+                // Update the display with mock in-progress tasks
+                window.testExports.updateCurrentTaskDisplay([{ id: 'task-current', text: 'Current Task' }]);
+                
+                // Check if current task display shows the correct task
+                const displayText = document.getElementById('currentTaskDisplay').textContent;
+                assert(displayText.includes('Current Task'), 'Should display the current task name');
+                
+                // Test with empty in-progress tasks
+                window.testExports.updateCurrentTaskDisplay([]);
+                assert(document.getElementById('currentTaskDisplay').textContent.includes('No task selected'), 
+                    'Should show "No task selected" when no tasks are in progress');
+            });
+            
+            // Test getting task state
+            test('Get Tasks State', () => {
+                // Setup some tasks in columns
+                document.getElementById('todoTasks').innerHTML = '';
+                document.getElementById('inProgressTasks').innerHTML = '';
+                document.getElementById('doneTasks').innerHTML = '';
+                
+                const todoTask = window.testExports.createTaskElement('Todo Task');
+                todoTask.id = 'task-todo';
+                document.getElementById('todoTasks').appendChild(todoTask);
+                
+                const inProgressTask = window.testExports.createTaskElement('In Progress Task');
+                inProgressTask.id = 'task-progress';
+                document.getElementById('inProgressTasks').appendChild(inProgressTask);
+                
+                const doneTask = window.testExports.createTaskElement('Done Task');
+                doneTask.id = 'task-done';
+                document.getElementById('doneTasks').appendChild(doneTask);
+                
+                // Get state
+                const state = window.testExports.getTasksState();
+                
+                // Verify state
+                assertEqual(state.todo.length, 1, 'Should have one todo task');
+                assertEqual(state.inProgress.length, 1, 'Should have one in-progress task');
+                assertEqual(state.done.length, 1, 'Should have one done task');
+                assertEqual(state.todo[0].text, 'Todo Task', 'Todo task should have correct text');
+                assertEqual(state.inProgress[0].text, 'In Progress Task', 'In-progress task should have correct text');
+                assertEqual(state.done[0].text, 'Done Task', 'Done task should have correct text');
+            });
+            
+            // Test drag handling
+            test('Make Task Draggable', () => {
+                const task = document.createElement('div');
+                task.textContent = 'Draggable Task';
+                
+                window.testExports.makeDraggable(task);
+                
+                assert(task.draggable, 'Task should be draggable');
+                assert(task.hasAttribute('draggable'), 'Task should have draggable attribute');
+            });
+            
+            // Test modal handling
+            test('Open and Close Edit Modal', () => {
+                // Create a task
+                const task = window.testExports.createTaskElement('Task to Edit', 'Task Details');
+                task.id = 'task-edit';
+                document.body.appendChild(task);
+                
+                // Mock the modal display property
+                document.getElementById('taskEditModal').style.display = 'none';
+                
+                // Open modal
+                window.testExports.openEditModal(task);
+                
+                // Check if modal is shown
+                assertEqual(document.getElementById('taskEditModal').style.display, 'block', 'Modal should be displayed');
+                assertEqual(document.getElementById('taskNameInput').value, 'Task to Edit', 'Task name should be populated');
+                assertEqual(document.getElementById('taskDetailInput').value, 'Task Details', 'Task details should be populated');
+                
+                // Close modal
+                window.testExports.closeEditModal();
+                
+                // Check if modal is hidden
+                assertEqual(document.getElementById('taskEditModal').style.display, 'none', 'Modal should be hidden');
+                
+                // Clean up
+                document.body.removeChild(task);
+            });
+            
+            // Test saving task details
+            test('Save Task Details', () => {
+                // Create a task and open modal
+                const task = window.testExports.createTaskElement('Initial Task', 'Initial Details');
+                task.id = 'task-save';
+                document.body.appendChild(task);
+                
+                // Open edit modal with this task
+                window.testExports.openEditModal(task);
+                
+                // Update values in the inputs
+                document.getElementById('taskNameInput').value = 'Updated Task';
+                document.getElementById('taskDetailInput').value = 'Updated Details';
+                
+                // Save the details
+                window.testExports.saveTaskDetails();
+                
+                // Check if task was updated
+                assertEqual(task.querySelector('.task-title').textContent, 'Updated Task', 'Task title should be updated');
+                assertEqual(task.querySelector('.task-details').textContent, 'Updated Details', 'Task details should be updated');
+                
+                // Clean up
+                document.body.removeChild(task);
+            });
+            
+            // Test clearing details
+            test('Clear Task Details', () => {
+                // Create a task with details
+                const task = window.testExports.createTaskElement('Task with Details', 'Some Details');
+                task.id = 'task-clear';
+                document.body.appendChild(task);
+                
+                // Open edit modal
+                window.testExports.openEditModal(task);
+                
+                // Clear details
+                document.getElementById('taskDetailInput').value = '';
+                
+                // Save the details
+                window.testExports.saveTaskDetails();
+                
+                // Check if details were removed
+                assert(!task.querySelector('.task-details'), 'Details element should be removed');
+                
+                // Clean up
+                document.body.removeChild(task);
+            });
+            
+            // Test drag after element calculation
+            test('Get Drag After Element', () => {
+                // Create a container with multiple tasks
+                const container = document.createElement('div');
+                
+                // Add three tasks
+                for (let i = 0; i < 3; i++) {
+                    const task = document.createElement('div');
+                    task.className = 'task';
+                    task.style.height = '20px';
+                    task.style.marginBottom = '5px';
+                    container.appendChild(task);
+                }
+                
+                document.body.appendChild(container);
+                
+                // Mock getBoundingClientRect for each task
+                const tasks = container.querySelectorAll('.task');
+                const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+                
+                tasks[0].getBoundingClientRect = () => ({ top: 0, height: 20 });
+                tasks[1].getBoundingClientRect = () => ({ top: 25, height: 20 });
+                tasks[2].getBoundingClientRect = () => ({ top: 50, height: 20 });
+                
+                // Test getting element after y = 15 (which should be tasks[1])
+                const afterElement1 = window.testExports.getDragAfterElement(container, 15);
+                assertEqual(afterElement1, tasks[1], 'Should return the second task for y = 15');
+                
+                // Test getting element after y = 40 (which should be tasks[2])
+                const afterElement2 = window.testExports.getDragAfterElement(container, 40);
+                assertEqual(afterElement2, tasks[2], 'Should return the third task for y = 40');
+                
+                // Test getting element after y = 70 (which should be undefined/null as it's beyond all tasks)
+                const afterElement3 = window.testExports.getDragAfterElement(container, 70);
+                assert(!afterElement3, 'Should return null for y beyond all tasks');
+                
+                // Restore original method
+                Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+                
+                // Clean up
+                document.body.removeChild(container);
+            });
+            
+            // Test showing/hiding trash column
+            test('Show and Hide Trash Column', () => {
+                // Make sure we have a trash column
+                const trashColumn = document.getElementById('trashColumn');
+                trashColumn.style.display = 'none';
+                trashColumn.classList.remove('visible');
+                
+                // Show trash
+                window.testExports.showTrashColumn();
+                
+                // Check if trash column is visible
+                assertEqual(trashColumn.style.display, 'flex', 'Trash column should be displayed');
+                assert(trashColumn.classList.contains('visible'), 'Trash column should have visible class');
+                
+                // Hide trash
+                window.testExports.hideTrashColumn();
+                
+                // Check if trash column visibility class is removed
+                assert(!trashColumn.classList.contains('visible'), 'Visible class should be removed');
+                
+                // Note: we don't test the setTimeout effect here
+            });
+            
+            // Test event simulation
+            test('Simulate Click Event', () => {
+                // Create an element to click
+                const element = document.createElement('button');
+                let clicked = false;
+                element.addEventListener('click', () => { clicked = true; });
+                document.body.appendChild(element);
+                
+                // Simulate click
+                window.testExports.simulateClick(element);
+                
+                // Check if click handler was triggered
+                assert(clicked, 'Click event should be triggered');
+                
+                // Clean up
+                document.body.removeChild(element);
+            });
+            
+            // Test task dragging simulation
+            test('Simulate Drag Start', () => {
+                // Create a task
+                const task = window.testExports.createTaskElement('Drag Task');
+                task.id = 'task-drag';
+                document.body.appendChild(task);
+                
+                // Simulate drag start
+                const data = window.testExports.simulateDragStart(task);
+                
+                // Verify data (would have been set in the real event handler)
+                assert(data['text/plain'] || data['source-column'], 'Data should be set during drag start');
+                
+                // Clean up
+                document.body.removeChild(task);
+            });
+            
+            // Test update board
+            test('Update Board', () => {
+                // Clear all columns
+                document.getElementById('todoTasks').innerHTML = '';
+                document.getElementById('inProgressTasks').innerHTML = '';
+                document.getElementById('doneTasks').innerHTML = '';
+                
+                // Set up board state
+                const state = {
+                    todo: [{ id: 'task-new-1', text: 'New Todo', details: '' }],
+                    inProgress: [{ id: 'task-new-2', text: 'New In Progress', details: 'Details' }],
+                    done: [{ id: 'task-new-3', text: 'New Done', details: '' }],
+                    taskIdCounter: 3
+                };
+                
+                // Update board
+                window.testExports.updateBoard(state);
+                
+                // Verify columns
+                assertEqual(document.getElementById('todoTasks').children.length, 1, 'Todo should have one task');
+                assertEqual(document.getElementById('inProgressTasks').children.length, 1, 'In progress should have one task');
+                assertEqual(document.getElementById('doneTasks').children.length, 1, 'Done should have one task');
+                
+                assertEqual(document.getElementById('todoTasks').children[0].id, 'task-new-1', 
+                    'Todo task should have correct ID');
+                assertEqual(document.getElementById('inProgressTasks').children[0].id, 'task-new-2', 
+                    'In progress task should have correct ID');
+                assertEqual(document.getElementById('doneTasks').children[0].id, 'task-new-3', 
+                    'Done task should have correct ID');
+            });
+            
+            // Test integration with timer via current task display
+            test('Current Task Display Update', () => {
+                // Clear in progress column and add a task
+                document.getElementById('inProgressTasks').innerHTML = '';
+                const task = window.testExports.createTaskElement('Timer Task');
+                task.id = 'task-timer';
+                document.getElementById('inProgressTasks').appendChild(task);
+                
+                // Update display
+                window.testExports.updateCurrentTaskDisplay([{ id: 'task-timer', text: 'Timer Task' }]);
+                
+                // Check if display shows the task
+                const displayText = document.getElementById('currentTaskDisplay').textContent;
+                assert(displayText.includes('Timer Task'), 'Current task display should show the timer task');
+            });
+            
+            // Test simulating drop operation
+            test('Simulate Drop Operation', () => {
+                // Clear columns
+                document.getElementById('todoTasks').innerHTML = '';
+                document.getElementById('inProgressTasks').innerHTML = '';
+                
+                // Create a task in TODO
+                const task = window.testExports.createTaskElement('Drag Task');
+                task.id = 'task-to-drag';
+                document.getElementById('todoTasks').appendChild(task);
+                
+                // Create a fake data transfer for the drop
+                const dataTransfer = {
+                    'text/plain': 'task-to-drag',
+                    'source-column': 'todoTasks'
+                };
+                
+                // Simulate dropping on inProgress column
+                const inProgressColumn = document.querySelector('#inProgressTasks').parentElement;
+                window.testExports.simulateDrop(inProgressColumn, dataTransfer);
+                
+                // Verify task was not actually moved (since this is just a simulation)
+                // We're not executing the full handleDrop logic in this test
+                // Just verifying the simulation function works
+                assertEqual(document.getElementById('task-to-drag').parentElement.id, 'todoTasks',
+                    'Task should remain in original column in simulation');
+            });
         }
     </script>
 </body>
