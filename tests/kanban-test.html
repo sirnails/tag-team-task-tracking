@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban.js Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .test-case {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .test-pass {
+            background-color: #dff0d8;
+            border-left: 5px solid #5cb85c;
+        }
+        .test-fail {
+            background-color: #f2dede;
+            border-left: 5px solid #d9534f;
+        }
+        .test-name {
+            font-weight: bold;
+        }
+        .test-error {
+            color: #a94442;
+            margin-top: 5px;
+        }
+        #summary {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Kanban.js Test Suite</h1>
+    <div id="summary"></div>
+    <div id="test-container"></div>
+
+    <!-- Mock DOM elements needed for tests -->
+    <div style="display: none;">
+        <div id="todoTasks"></div>
+        <div id="inProgressTasks"></div>
+        <div id="doneTasks"></div>
+        <div id="trashTasks"></div>
+        <input id="taskInput" type="text">
+        <input id="taskNameInput" type="text">
+        <textarea id="taskDetailInput"></textarea>
+        <button id="loadTasks">Add Task</button>
+        <button id="clearStorage">Clear All</button>
+        <button id="saveTaskDetails">Save</button>
+        <button id="cancelTaskDetails">Cancel</button>
+        <div id="currentTaskDisplay"></div>
+        <div id="taskEditModal"></div>
+        <div id="trashColumn" style="display: none;">
+            <div class="tasks" id="trashTasks">
+                <div class="empty-state">Drop here to delete</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test script -->
+    <script>
+        // Test framework
+        const tests = [];
+        let passCount = 0;
+        let failCount = 0;
+        
+        function test(name, testFunction) {
+            tests.push({ name, testFunction });
+        }
+        
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || "Assertion failed");
+            }
+        }
+        
+        function assertEqual(actual, expected, message) {
+            assert(actual === expected, 
+                (message || "Values should be equal") + 
+                `\nExpected: ${expected}\nActual: ${actual}`);
+        }
+        
+        function assertNotEqual(actual, expected, message) {
+            assert(actual !== expected, 
+                (message || "Values should not be equal") + 
+                `\nValue: ${actual}`);
+        }
+        
+        function assertDeepEqual(actual, expected, message) {
+            const actualStr = JSON.stringify(actual);
+            const expectedStr = JSON.stringify(expected);
+            
+            assert(actualStr === expectedStr, 
+                (message || "Objects should be equal") + 
+                `\nExpected: ${expectedStr}\nActual: ${actualStr}`);
+        }
+        
+        function runTests() {
+            const testContainer = document.getElementById('test-container');
+            testContainer.innerHTML = '';
+            
+            tests.forEach(testObj => {
+                const testCase = document.createElement('div');
+                testCase.className = 'test-case';
+                
+                const testName = document.createElement('div');
+                testName.className = 'test-name';
+                testName.textContent = testObj.name;
+                testCase.appendChild(testName);
+                
+                try {
+                    testObj.testFunction();
+                    testCase.classList.add('test-pass');
+                    passCount++;
+                } catch (error) {
+                    testCase.classList.add('test-fail');
+                    
+                    const errorElement = document.createElement('div');
+                    errorElement.className = 'test-error';
+                    errorElement.textContent = error.message;
+                    testCase.appendChild(errorElement);
+                    
+                    failCount++;
+                }
+                
+                testContainer.appendChild(testCase);
+            });
+            
+            // Update summary
+            const summary = document.getElementById('summary');
+            summary.textContent = `Total: ${tests.length}, Passed: ${passCount}, Failed: ${failCount}`;
+        }
+        
+        // Import test wrapper
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load the test wrapper script with path that works for both HTTP and file protocols
+            const script = document.createElement('script');
+            // Check if we're running from a file:// protocol
+            const isFileProtocol = window.location.protocol === 'file:';
+            
+            // Use relative path when using file:// protocol
+            script.src = isFileProtocol ? 
+                         './js/kanban/kanban-test-wrapped.js' : 
+                         '/tests/js/kanban/kanban-test-wrapped.js';
+            
+            script.onload = () => {
+                defineTests();
+                runTests();
+            };
+            script.onerror = (e) => {
+                document.getElementById('summary').textContent = 'Error loading test script: ' + e.target.src;
+                console.error('Failed to load script:', e);
+            };
+            document.head.appendChild(script);
+        });
+        
+        function defineTests() {
+            // Task creation tests
+            test('Create Task Element', () => {
+                const taskText = 'Test Task';
+                const taskElement = window.testExports.createTaskElement(taskText);
+                
+                assert(taskElement instanceof Element, 'Should return an Element');
+                assert(taskElement.classList.contains('task'), 'Should have task class');
+                assertEqual(taskElement.querySelector('.task-title').textContent, taskText, 'Should have correct task text');
+            });
+            
+            test('Create Task With Details', () => {
+                const taskText = 'Test Task';
+                const details = 'These are details';
+                const taskElement = window.testExports.createTaskElement(taskText, details);
+                
+                assert(taskElement.querySelector('.task-details'), 'Should have details element');
+                assertEqual(taskElement.querySelector('.task-details').textContent, details, 'Should have correct details text');
+            });
+            
+            // Column management tests
+            test('Reset Column', () => {
+                const column = document.createElement('div');
+                const emptyText = 'Empty Column';
+                
+                window.testExports.resetColumn(column, emptyText);
+                
+                assert(column.children.length === 1, 'Should have one child');
+                assert(column.querySelector('.empty-state'), 'Should have empty state element');
+                assertEqual(column.querySelector('.empty-state').textContent, emptyText, 'Should have correct empty text');
+            });
+            
+            test('Get Default Empty Text', () => {
+                const result = window.testExports.getDefaultEmptyText('todoTasks');
+                assertEqual(result, 'Add tasks to get started', 'Should return correct empty text for todoTasks');
+            });
+            
+            // Board initialization test
+            test('Initialize Board', () => {
+                const state = {
+                    todo: [{ id: 'task-1', text: 'Task 1', details: '' }],
+                    inProgress: [],
+                    done: [],
+                    taskIdCounter: 1
+                };
+                
+                window.testExports.initializeBoard(state);
+                
+                // Check if todo column has the task
+                const todoTasks = document.getElementById('todoTasks');
+                assert(todoTasks.children.length === 1, 'Todo should have one task');
+                assertEqual(todoTasks.children[0].id, 'task-1', 'Should have correct task ID');
+            });
+            
+            // Task data extraction test
+            test('Get Task Data', () => {
+                // Set up a mock container with tasks
+                const container = document.createElement('div');
+                const task = window.testExports.createTaskElement('Test Task', 'Test Details');
+                task.id = 'task-test';
+                container.appendChild(task);
+                
+                const taskData = window.testExports.getTaskData(container);
+                
+                assert(Array.isArray(taskData), 'Should return an array');
+                assertEqual(taskData.length, 1, 'Should have one task');
+                assertEqual(taskData[0].id, 'task-test', 'Should have correct ID');
+                assertEqual(taskData[0].text, 'Test Task', 'Should have correct text');
+                assertEqual(taskData[0].details, 'Test Details', 'Should have correct details');
+            });
+        }
+    </script>
+</body>
+</html>
