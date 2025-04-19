@@ -32,32 +32,45 @@ function initializeDefaultWorkflow() {
 
 // State CRUD operations
 function addState(name, color) {
+    console.log('addState called with:', { name, color });
     const id = `state-${workflowState.stateIdCounter++}`;
     const newState = { id, name, color };
     workflowState.states.push(newState);
+    console.log('New state added:', newState);
     return newState;
 }
 
 function updateState(stateId, updates) {
+    console.log('updateState called with:', { stateId, updates });
     const stateIndex = workflowState.states.findIndex(s => s.id === stateId);
     if (stateIndex >= 0) {
         workflowState.states[stateIndex] = { ...workflowState.states[stateIndex], ...updates };
+        console.log('State updated:', workflowState.states[stateIndex]);
         return workflowState.states[stateIndex];
     }
+    console.error('State not found with id:', stateId);
     return null;
 }
 
 function deleteState(stateId) {
+    console.log('deleteState called with stateId:', stateId);
     const stateIndex = workflowState.states.findIndex(s => s.id === stateId);
     if (stateIndex >= 0) {
+        const removedState = workflowState.states[stateIndex];
         workflowState.states.splice(stateIndex, 1);
         
         // Also remove any transitions involving this state
+        const originalTransitionCount = workflowState.transitions.length;
         workflowState.transitions = workflowState.transitions.filter(
             t => t.from !== stateId && t.to !== stateId
         );
+        const removedTransitions = originalTransitionCount - workflowState.transitions.length;
+        
+        console.log('State removed:', removedState);
+        console.log('Related transitions removed:', removedTransitions);
         return true;
     }
+    console.error('State not found with id:', stateId);
     return false;
 }
 

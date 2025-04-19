@@ -203,7 +203,9 @@ function handleConfigButtonClicks(e) {
     // Handle Add State button
     if (e.target.id === 'addStateBtn' || e.target.closest('#addStateBtn')) {
         console.log('Add State button clicked via global handler');
+        console.log('About to call showStateModal()');
         showStateModal();
+        console.log('Returned from showStateModal()');
         e.preventDefault();
         return;
     }
@@ -211,7 +213,9 @@ function handleConfigButtonClicks(e) {
     // Handle Add Transition button
     if (e.target.id === 'addTransitionBtn' || e.target.closest('#addTransitionBtn')) {
         console.log('Add Transition button clicked via global handler');
+        console.log('About to call showTransitionModal()');
         showTransitionModal();
+        console.log('Returned from showTransitionModal()');
         e.preventDefault();
         return;
     }
@@ -219,10 +223,17 @@ function handleConfigButtonClicks(e) {
     // Handle Edit State buttons
     if (e.target.classList.contains('edit-state-btn') || e.target.closest('.edit-state-btn')) {
         const button = e.target.classList.contains('edit-state-btn') ? e.target : e.target.closest('.edit-state-btn');
-        const stateId = button.getAttribute('data-id');
+        const stateId = button.getAttribute('data-id') || button.getAttribute('data-state-id');
         console.log('Edit state button clicked for stateId:', stateId);
         const state = workflowState.states.find(s => s.id === stateId);
-        if (state) showStateModal(state);
+        console.log('Found state:', state);
+        if (state) {
+            console.log('About to call showStateModal with state:', state);
+            showStateModal(state);
+            console.log('Returned from showStateModal with state');
+        } else {
+            console.error('State not found for id:', stateId);
+        }
         e.preventDefault();
         return;
     }
@@ -230,7 +241,7 @@ function handleConfigButtonClicks(e) {
     // Handle Delete State buttons
     if (e.target.classList.contains('delete-state-btn') || e.target.closest('.delete-state-btn')) {
         const button = e.target.classList.contains('delete-state-btn') ? e.target : e.target.closest('.delete-state-btn');
-        const stateId = button.getAttribute('data-id');
+        const stateId = button.getAttribute('data-id') || button.getAttribute('data-state-id');
         console.log('Delete state button clicked for stateId:', stateId);
         deleteState(stateId);
         e.preventDefault();
@@ -300,9 +311,12 @@ function renderWorkItemsList() {
 
 // Modals and detail views
 function showWorkItemModal(item = null) {
+    console.log('showWorkItemModal called with item:', item);
+    
     // Check if a modal already exists and remove it
     const existingModal = document.getElementById('workItemModal');
     if (existingModal) {
+        console.log('Removing existing modal');
         document.body.removeChild(existingModal);
     }
     
@@ -312,10 +326,14 @@ function showWorkItemModal(item = null) {
     const defaultDescription = isEdit ? item.description : '';
     const defaultStateId = isEdit ? item.stateId : workflowState.states[0]?.id;
     
+    console.log('Default values:', { isEdit, defaultTitle, defaultDescription, defaultStateId });
+    
     // Create modal element
     const modal = document.createElement('div');
     modal.id = 'workItemModal';
     modal.className = 'modal';
+    
+    console.log('Modal element created');
     
     // Set HTML content
     modal.innerHTML = `
@@ -350,29 +368,76 @@ function showWorkItemModal(item = null) {
         </div>
     `;
     
+    console.log('Modal HTML content set');
+    
     // Add to DOM
     document.body.appendChild(modal);
+    console.log('Modal added to DOM');
+    
+    // Set explicit inline styles to ensure modal visibility
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.zIndex = '1000';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.overflow = 'auto';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.4)';
+    
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.backgroundColor = '#fefefe';
+        modalContent.style.margin = '10% auto';
+        modalContent.style.padding = '20px';
+        modalContent.style.border = '1px solid #888';
+        modalContent.style.width = '80%';
+        modalContent.style.maxWidth = '600px';
+        modalContent.style.borderRadius = '5px';
+    }
     
     // Show modal
     setTimeout(() => {
+        console.log('In setTimeout callback to show modal');
         modal.classList.add('show');
-        document.getElementById('workItemTitle').focus();
+        const titleInput = document.getElementById('workItemTitle');
+        if (titleInput) {
+            console.log('Found title input, focusing');
+            titleInput.focus();
+        } else {
+            console.error('Could not find workItemTitle input element');
+        }
     }, 10);
     
     // Add event listeners
-    modal.querySelector('.close-modal').addEventListener('click', () => {
-        closeWorkItemModal(modal);
-    });
+    const closeBtn = modal.querySelector('.close-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            console.log('Close modal button clicked');
+            closeWorkItemModal(modal);
+        });
+    } else {
+        console.error('Could not find close-modal button');
+    }
     
-    modal.querySelector('#cancelWorkItem').addEventListener('click', () => {
-        closeWorkItemModal(modal);
-    });
+    const cancelBtn = modal.querySelector('#cancelWorkItem');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            console.log('Cancel button clicked');
+            closeWorkItemModal(modal);
+        });
+    } else {
+        console.error('Could not find cancelWorkItem button');
+    }
     
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
+            console.log('Modal background clicked, closing');
             closeWorkItemModal(modal);
         }
     });
+    
+    console.log('Modal setup complete');
 }
 
 function closeWorkItemModal(modal) {
@@ -747,6 +812,458 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+/**
+ * Shows modal dialog for adding or editing a workflow state
+ * @param {Object|null} state - The state to edit, or null for adding a new state
+ */
+function showStateModal(state = null) {
+    console.log('showStateModal called with state:', state);
+    
+    // Create modal element
+    const modal = document.createElement('div');
+    modal.id = 'stateModal';
+    modal.className = 'modal';
+    
+    console.log('Modal element created');
+    
+    // Set HTML content
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>${state ? 'Edit' : 'Add'} Workflow State</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="stateForm">
+                <input type="hidden" id="stateId" value="${state ? state.id : ''}">
+                <div class="form-group">
+                    <label for="stateName">State Name</label>
+                    <input type="text" id="stateName" value="${state ? escapeHtml(state.name) : ''}" required>
+                </div>
+                <div class="form-group">
+                    <label for="stateColor">Color</label>
+                    <input type="color" id="stateColor" value="${state ? state.color : '#3498db'}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancelState" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="submit" class="primary-btn"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    console.log('Modal HTML content set');
+    
+    // Add to DOM
+    document.body.appendChild(modal);
+    console.log('Modal added to DOM');
+    
+    // Set explicit inline styles to ensure modal visibility
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.zIndex = '1000';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.overflow = 'auto';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.4)';
+    
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.backgroundColor = '#fefefe';
+        modalContent.style.margin = '10% auto';
+        modalContent.style.padding = '20px';
+        modalContent.style.border = '1px solid #888';
+        modalContent.style.width = '80%';
+        modalContent.style.maxWidth = '600px';
+        modalContent.style.borderRadius = '5px';
+    }
+    
+    // Show modal
+    setTimeout(() => {
+        console.log('In setTimeout callback to show modal');
+        modal.classList.add('show');
+        const stateNameInput = document.getElementById('stateName');
+        if (stateNameInput) {
+            console.log('Found stateName input, focusing');
+            stateNameInput.focus();
+        } else {
+            console.error('Could not find stateName input element');
+        }
+    }, 10);
+    
+    // Add event listeners
+    modal.querySelector('.close-modal').addEventListener('click', () => {
+        console.log('Close modal button clicked');
+        closeModal(modal);
+    });
+    
+    modal.querySelector('#cancelState').addEventListener('click', () => {
+        console.log('Cancel button clicked');
+        closeModal(modal);
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            console.log('Modal background clicked, closing');
+            closeModal(modal);
+        }
+    });
+    
+    console.log('Modal setup complete');
+}
+
+/**
+ * Closes a modal dialog
+ * @param {HTMLElement} modal - The modal element to close
+ */
+function closeModal(modal) {
+    console.log('closeModal called with modal:', modal);
+    modal.classList.remove('show');
+    setTimeout(() => {
+        console.log('In setTimeout callback to remove modal from DOM');
+        document.body.removeChild(modal);
+        console.log('Modal removed from DOM');
+    }, 300);
+}
+
+/**
+ * Saves the state configuration from the modal
+ */
+function saveStateConfig() {
+    console.log('saveStateConfig called');
+    const stateId = document.getElementById('stateId').value;
+    const stateName = document.getElementById('stateName').value.trim();
+    const stateColor = document.getElementById('stateColor').value;
+    
+    console.log('Form values:', { stateId, stateName, stateColor });
+    
+    if (stateName === '') {
+        console.error('State name is empty');
+        return;
+    }
+    
+    if (stateId) {
+        // Update existing state
+        console.log('Updating existing state with id:', stateId);
+        const stateIndex = workflowState.states.findIndex(s => s.id === stateId);
+        if (stateIndex !== -1) {
+            workflowState.states[stateIndex].name = stateName;
+            workflowState.states[stateIndex].color = stateColor;
+            console.log('State updated:', workflowState.states[stateIndex]);
+        } else {
+            console.error('Could not find state with id:', stateId);
+        }
+    } else {
+        // Add new state
+        console.log('Adding new state');
+        const newState = {
+            id: 'state_' + Date.now(),
+            name: stateName,
+            color: stateColor
+        };
+        workflowState.states.push(newState);
+        console.log('New state added:', newState);
+    }
+    
+    // Close modal
+    const modal = document.getElementById('stateModal');
+    if (modal) {
+        console.log('Closing modal');
+        closeModal(modal);
+    } else {
+        console.error('Could not find stateModal element');
+    }
+    
+    // Update UI and save to server
+    console.log('Notifying workflow change');
+    notifyWorkflowChange();
+    console.log('Refreshing workflow config screen');
+    showWorkflowConfigScreen();
+}
+
+/**
+ * Deletes a workflow state
+ * @param {string} stateId - The ID of the state to delete
+ */
+function deleteState(stateId) {
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this state? Any work items in this state will need to be reassigned.')) {
+        return;
+    }
+    
+    // Check if this state is used by any work items
+    const itemsInState = workItems.filter(item => item.stateId === stateId);
+    
+    // If items are using this state, we need to handle them
+    if (itemsInState.length > 0) {
+        // Find another state to move items to
+        const alternateState = workflowState.states.find(s => s.id !== stateId);
+        
+        if (!alternateState) {
+            alert("You can't delete the only state in the workflow.");
+            return;
+        }
+        
+        const confirmMove = confirm(`${itemsInState.length} items are currently in this state. Move them to "${alternateState.name}"?`);
+        if (!confirmMove) return;
+        
+        // Move all affected items to the alternate state
+        itemsInState.forEach(item => {
+            updateWorkItem(item.id, { stateId: alternateState.id });
+        });
+    }
+    
+    // Remove state from workflow configuration
+    workflowState.states = workflowState.states.filter(s => s.id !== stateId);
+    
+    // Also remove any transitions that involve this state
+    workflowState.transitions = workflowState.transitions.filter(t => 
+        t.from !== stateId && t.to !== stateId
+    );
+    
+    // Update UI and save to server
+    notifyWorkflowChange();
+    showWorkflowConfigScreen();
+}
+
+/**
+ * Shows modal dialog for adding or editing a workflow transition
+ * @param {Object|null} transition - The transition to edit, or null for adding a new transition
+ * @param {number|null} index - The index of the transition in the array
+ */
+function showTransitionModal(transition = null, index = null) {
+    console.log('showTransitionModal called with:', { transition, index });
+    
+    // Create modal element
+    const modal = document.createElement('div');
+    modal.id = 'transitionModal';
+    modal.className = 'modal';
+    
+    console.log('Transition modal element created');
+    
+    // Create options for state selection
+    const stateOptions = workflowState.states.map(state => 
+        `<option value="${state.id}">${escapeHtml(state.name)}</option>`
+    ).join('');
+    
+    console.log('Created state options for select dropdowns');
+    
+    // Set HTML content
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>${transition ? 'Edit' : 'Add'} Workflow Transition</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="transitionForm">
+                <input type="hidden" id="transitionIndex" value="${index !== null ? index : ''}">
+                <div class="form-group">
+                    <label for="fromState">From State</label>
+                    <select id="fromState" required>
+                        ${stateOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="toState">To State</label>
+                    <select id="toState" required>
+                        ${stateOptions}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancelTransition" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="submit" class="primary-btn"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    console.log('Transition modal HTML content set');
+    
+    // Add to DOM
+    document.body.appendChild(modal);
+    console.log('Transition modal added to DOM');
+    
+    // Set explicit inline styles to ensure modal visibility
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.zIndex = '1000';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.overflow = 'auto';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.4)';
+    
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.backgroundColor = '#fefefe';
+        modalContent.style.margin = '10% auto';
+        modalContent.style.padding = '20px';
+        modalContent.style.border = '1px solid #888';
+        modalContent.style.width = '80%';
+        modalContent.style.maxWidth = '600px';
+        modalContent.style.borderRadius = '5px';
+    }
+    
+    // Set selected values if editing
+    if (transition) {
+        console.log('Setting default values for editing existing transition');
+        const fromStateSelect = document.getElementById('fromState');
+        const toStateSelect = document.getElementById('toState');
+        
+        if (fromStateSelect && toStateSelect) {
+            fromStateSelect.value = transition.from;
+            toStateSelect.value = transition.to;
+            console.log('Dropdown values set to:', { 
+                from: transition.from, 
+                to: transition.to 
+            });
+        } else {
+            console.error('Could not find from/to state select elements');
+        }
+    }
+    
+    // Show modal
+    setTimeout(() => {
+        console.log('In setTimeout callback to show transition modal');
+        modal.classList.add('show');
+        const fromStateSelect = document.getElementById('fromState');
+        if (fromStateSelect) {
+            console.log('Focusing "from state" dropdown');
+            fromStateSelect.focus();
+        } else {
+            console.error('Could not find fromState select element');
+        }
+    }, 10);
+    
+    // Add event listeners
+    const closeBtn = modal.querySelector('.close-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            console.log('Close transition modal button clicked');
+            closeModal(modal);
+        });
+    } else {
+        console.error('Could not find close-modal button in transition modal');
+    }
+    
+    const cancelBtn = modal.querySelector('#cancelTransition');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            console.log('Cancel transition button clicked');
+            closeModal(modal);
+        });
+    } else {
+        console.error('Could not find cancelTransition button');
+    }
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            console.log('Transition modal background clicked, closing');
+            closeModal(modal);
+        }
+    });
+    
+    console.log('Transition modal setup complete');
+}
+
+/**
+ * Saves the transition configuration from the modal
+ */
+function saveTransitionConfig() {
+    console.log('saveTransitionConfig called');
+    const transitionIndex = document.getElementById('transitionIndex').value;
+    const fromStateId = document.getElementById('fromState').value;
+    const toStateId = document.getElementById('toState').value;
+    
+    console.log('Transition form values:', { transitionIndex, fromStateId, toStateId });
+    
+    if (fromStateId === toStateId) {
+        console.error('From and To states are the same, showing alert');
+        alert("From and To states must be different");
+        return;
+    }
+    
+    // Check if this transition already exists
+    const existingTransition = workflowState.transitions.find(t => 
+        t.from === fromStateId && t.to === toStateId &&
+        (transitionIndex === '' || parseInt(transitionIndex) !== workflowState.transitions.indexOf(t))
+    );
+    
+    if (existingTransition) {
+        console.error('This transition already exists, showing alert');
+        alert("This transition already exists");
+        return;
+    }
+    
+    if (transitionIndex !== '') {
+        // Update existing transition
+        console.log('Updating existing transition at index:', transitionIndex);
+        const index = parseInt(transitionIndex);
+        if (index >= 0 && index < workflowState.transitions.length) {
+            workflowState.transitions[index].from = fromStateId;
+            workflowState.transitions[index].to = toStateId;
+            console.log('Transition updated:', workflowState.transitions[index]);
+        } else {
+            console.error('Invalid transition index:', index);
+        }
+    } else {
+        // Add new transition
+        console.log('Adding new transition');
+        const newTransition = {
+            from: fromStateId,
+            to: toStateId
+        };
+        workflowState.transitions.push(newTransition);
+        console.log('New transition added:', newTransition);
+    }
+    
+    // Close modal
+    const modal = document.getElementById('transitionModal');
+    if (modal) {
+        console.log('Closing transition modal');
+        closeModal(modal);
+    } else {
+        console.error('Could not find transitionModal element');
+    }
+    
+    // Update UI and save to server
+    console.log('Notifying workflow change after transition update');
+    notifyWorkflowChange();
+    console.log('Refreshing workflow config screen');
+    showWorkflowConfigScreen();
+}
+
+/**
+ * Deletes a workflow transition
+ * @param {number} index - The index of the transition to delete
+ */
+function deleteTransition(index) {
+    console.log('deleteTransition called with index:', index);
+    
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this transition?')) {
+        console.log('User cancelled transition deletion');
+        return;
+    }
+    
+    // Remove the transition at the specified index
+    if (index >= 0 && index < workflowState.transitions.length) {
+        const removedTransition = workflowState.transitions[index];
+        workflowState.transitions.splice(index, 1);
+        console.log('Transition removed:', removedTransition);
+    } else {
+        console.error('Invalid transition index:', index);
+    }
+    
+    // Update UI and save to server
+    console.log('Notifying workflow change after transition deletion');
+    notifyWorkflowChange();
+    console.log('Refreshing workflow config screen');
+    showWorkflowConfigScreen();
+}
+
 export {
     getDOMElements,
     setupEventListeners,
@@ -754,5 +1271,7 @@ export {
     showWorkItemDetail,
     showWorkflowConfigScreen,
     updateWorkItemDetailWithoutVisualization,
-    escapeHtml
+    escapeHtml,
+    showWorkItemModal,  // Add this to exports
+    showStateModal     // Add this to exports
 };
