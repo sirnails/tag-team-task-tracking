@@ -270,33 +270,165 @@ function createWorkflowVisualization(container, currentStateId) {
                     isDragging: false,
                     isInitializing: false,
                     currentStateId,
-                    lastZoomK: null,
-                    lastPanX: null,
-                    lastPanY: null,
-                    elasticTimeout: null,
+                    lastZoomK: null, // Store last zoom scale
+                    lastPanX: null,  // Store last pan X
+                    lastPanY: null,  // Store last pan Y
+                    elasticTimeout: null, // Timeout for elastic effect
+                    mouseleaveTimeout: null, // Timeout for mouseleave effect
                     containerId: container.id
                 };
+                const vizState = window.workflowVisualizations[graphId]; // Get reference
 
                 // Create a group for zoom transformations
                 const g = svg.append("g")
                     .attr("class", "zoom-container");
 
                 // Update g in visualization state
-                window.workflowVisualizations[graphId].g = g;
+                vizState.g = g;
 
                 // Create zoom behavior
                 const zoom = d3.zoom()
                     .scaleExtent([0.2, 5])
                     .on("zoom", (event) => {
-                        g.attr("transform", event.transform);
+                        if (!vizState) return;
+                        const { transform, sourceEvent } = event; // Get sourceEvent
+
+                        // Apply the transform
+                        g.attr("transform", transform);
+
+                        // Calculate change in transform from the last event
+                        const deltaK = vizState.lastZoomK ? transform.k / vizState.lastZoomK : 1;
+                        const deltaX = transform.x - (vizState.lastPanX || transform.x);
+                        const deltaY = transform.y - (vizState.lastPanY || transform.y);
+
+                        const zoomChanged = Math.abs(deltaK - 1) > 1e-6; // Use tolerance for float comparison
+                        const panChanged = Math.abs(deltaX) > 1e-6 || Math.abs(deltaY) > 1e-6;
+
+                        if (zoomChanged || panChanged) {
+                            // Clear any existing elastic timeout
+                            clearTimeout(vizState.elasticTimeout);
+
+                            const panSloshFactor = 0.05; // How much panning affects velocity (adjust for feel)
+                            const zoomSloshFactor = 5;  // How much zooming affects velocity (adjust for feel)
+
+                            // Determine zoom center in simulation coordinates (if zooming)
+                            let zoomCenterX = 0, zoomCenterY = 0;
+                            if (zoomChanged && sourceEvent) {
+                                const [mouseX, mouseY] = d3.pointer(sourceEvent, svg.node());
+                                [zoomCenterX, zoomCenterY] = transform.invert([mouseX, mouseY]);
+                            }
+
+                            nodes.forEach(node => {
+                                if (node.fx === null && node.fy === null) { // Only affect unpinned nodes
+                                    // --- Panning Slosh ---
+                                    // Apply velocity opposite to pan direction, scaled by factor
+                                    // Divide deltaX/Y by scale (k) because pan delta is in screen space
+                                    node.vx -= (deltaX / transform.k) * panSloshFactor;
+                                    node.vy -= (deltaY / transform.k) * panSloshFactor;
+
+                                    // --- Zooming Slosh ---
+                                    if (zoomChanged) {
+                                        const dx = node.x - zoomCenterX;
+                                        const dy = node.y - zoomCenterY;
+                                        const dist = Math.sqrt(dx * dx + dy * dy);
+                                        if (dist > 0) {
+                                            // Apply velocity outwards for zoom in (deltaK > 1), inwards for zoom out
+                                            const zoomForce = (deltaK - 1) * zoomSloshFactor;
+                                            node.vx += (dx / dist) * zoomForce;
+                                            node.vy += (dy / dist) * zoomForce;
+                                        }
+                                    }
+                                }
+                            });
+
+                            // Briefly restart simulation for elastic/slosh effect
+                            simulation.alpha(0.2).restart(); // Slightly higher alpha for more visible effect
+
+                            // Set a timeout to stop the simulation after the effect settles
+                            vizState.elasticTimeout = setTimeout(() => {
+                                if (window.workflowVisualizations[graphId] && !vizState.isDragging) {
+                                    // Check if mouse is still over before stopping completely
+                                    const pointer = d3.select(svg.node()).property('__d3_pointer__'); // Check if mouse is over
+                                    if (!pointer) {
+                                        simulation.alpha(0).stop();
+                                    } else {
+                                        simulation.alphaTarget(0); // Gently stop if mouse is still over
+                                    }
+                                }
+                            }, 500); // Longer duration for slosh effect
+                        }
+
+                        // Store current transform state for the next event
+                        vizState.lastZoomK = transform.k;
+                        vizState.lastPanX = transform.x;
+                        vizState.lastPanY = transform.y;
                     });
 
                 // Update zoom in visualization state
-                window.workflowVisualizations[graphId].zoom = zoom;
+                vizState.zoom = zoom;
 
-                // Apply zoom
-                svg.call(zoom)
-                    .call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8));
+                // Apply zoom behavior to SVG
+                svg.call(zoom);
+                // Set initial transform (applied *after* initial fitView)
+
+                // --- Mouse Interaction Listeners ---
+                svg.on('mousemove', (event) => {
+                    if (!vizState || vizState.isDragging) return; // Ignore if dragging a node
+
+                    const currentTransform = d3.zoomTransform(svg.node());
+                    const [mouseX, mouseY] = d3.pointer(event, svg.node());
+                    const [simMouseX, simMouseY] = currentTransform.invert([mouseX, mouseY]);
+
+                    const maxRepulsionForce = 2.0; // Increased force slightly
+                    const repulsionRadius = 80;  // Reduced radius slightly
+                    const maxDisplacement = 15; // Max distance a node can be pushed (half radius)
+
+                    clearTimeout(vizState.mouseleaveTimeout); // Clear leave timeout
+
+                    let needsRestart = false;
+                    nodes.forEach(node => {
+                        if (node.fx === null && node.fy === null) { // Only affect unpinned nodes
+                            const dx = node.x - simMouseX;
+                            const dy = node.y - simMouseY;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+
+                            if (dist < repulsionRadius && dist > 0) {
+                                const force = (1 - dist / repulsionRadius) * maxRepulsionForce;
+                                let vx_change = (dx / dist) * force;
+                                let vy_change = (dy / dist) * force;
+
+                                // Limit displacement: Calculate potential new position
+                                const nextX = node.x + vx_change; // Simplified check
+                                const nextY = node.y + vy_change;
+                                const displacement = Math.sqrt(Math.pow(nextX - node.x, 2) + Math.pow(nextY - node.y, 2));
+
+                                // Apply velocity change only if displacement is within limits (crude check)
+                                // A better approach might involve temporary forces or constraints
+                                if (displacement < maxDisplacement * 5) { // Allow larger velocity change, rely on simulation damping
+                                    node.vx += vx_change;
+                                    node.vy += vy_change;
+                                    needsRestart = true;
+                                }
+                            }
+                        }
+                    });
+
+                    if (needsRestart) {
+                        simulation.alpha(0.1).restart(); // Keep simulation active while mouse moves
+                    }
+                });
+
+                svg.on('mouseleave', () => {
+                    if (!vizState || vizState.isDragging) return;
+                    // Set a timeout to stop the simulation shortly after mouse leaves
+                    clearTimeout(vizState.mouseleaveTimeout); // Clear previous timeout if any
+                    vizState.mouseleaveTimeout = setTimeout(() => {
+                        if (window.workflowVisualizations[graphId] && !vizState.isDragging) {
+                            simulation.alpha(0).stop();
+                        }
+                    }, 500); // Delay before stopping
+                });
+                // --- End Mouse Interaction Listeners ---
 
                 // --- START: Rendering Logic ---
 
@@ -506,6 +638,7 @@ function createWorkflowVisualization(container, currentStateId) {
                 // Function to reset positions
                 function resetPositions() {
                     if (!window.workflowVisualizations[graphId]) return;
+                    const vizState = window.workflowVisualizations[graphId]; // Get state
                     simulation.alpha(0.5).restart();
                     nodes.forEach(node => {
                         node.fx = null;
@@ -515,10 +648,13 @@ function createWorkflowVisualization(container, currentStateId) {
                         const stateObj = workflowState.states.find(s => s.id === node.id);
                         if (stateObj) delete stateObj.position;
                     });
+                    // Clear elastic timeout when resetting
+                    clearTimeout(vizState.elasticTimeout);
                     setTimeout(() => {
                         if (window.workflowVisualizations[graphId]) {
                             simulation.alpha(0).stop();
                             notifyWorkflowChange();
+                            fitView(); // Fit view after resetting
                         }
                     }, 1500);
                 }
@@ -558,8 +694,19 @@ function createWorkflowVisualization(container, currentStateId) {
                 // Stop simulation and fit view after initial layout
                 setTimeout(() => {
                     if (window.workflowVisualizations[graphId]) {
+                        const vizState = window.workflowVisualizations[graphId];
                         simulation.alpha(0).stop();
-                        fitView();
+                        fitView(); // Call fitView which applies transform via transition
+
+                        // Set initial zoom/pan state *after* fitting transition completes
+                        setTimeout(() => {
+                            if (window.workflowVisualizations[graphId]) {
+                                const currentTransform = d3.zoomTransform(svg.node());
+                                vizState.lastZoomK = currentTransform.k;
+                                vizState.lastPanX = currentTransform.x;
+                                vizState.lastPanY = currentTransform.y;
+                            }
+                        }, 750); // Match fitView transition duration
                     }
                 }, 1500);
 
