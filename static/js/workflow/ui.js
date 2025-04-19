@@ -30,6 +30,7 @@ let manageWorkflowBtn;
 let workItemsContainer;
 let workflowContainer;
 let configContainer;
+let themeToggle; // Add themeToggle to the list of DOM elements
 
 // Initialize DOM elements
 function getDOMElements() {
@@ -46,6 +47,7 @@ function getDOMElements() {
     workItemsContainer = document.getElementById('workItemsContainer');
     workflowContainer = document.getElementById('workflowContainer');
     configContainer = document.getElementById('configContainer');
+    themeToggle = document.getElementById('themeToggle'); // Get the theme toggle button
     
     // Debug log to check if elements are found
     console.log('DOM Elements initialized:', {
@@ -120,6 +122,12 @@ function setupEventListeners() {
     
     // Add document-level click handlers for dynamic buttons
     document.addEventListener('click', handleConfigButtonClicks);
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', handleThemeChange);
+    } else {
+        console.warn('themeToggle element not found');
+    }
 }
 
 // Toggle between views
@@ -269,6 +277,38 @@ function handleConfigButtonClicks(e) {
         e.preventDefault();
         return;
     }
+}
+
+// Add a handler for theme changes
+function handleThemeChange() {
+    console.log('Theme toggle clicked, checking for workflow visualization update.');
+    // Use a small timeout to allow the data-theme attribute to update
+    setTimeout(() => {
+        // Check if the work item detail view is currently displayed
+        if (workItemDetail && workItemDetail.style.display === 'block') {
+            console.log('Work item detail view is active, attempting to re-render visualization.');
+            const visualizationContainer = workItemDetail.querySelector('.workflow-visualization');
+            const itemIdInput = workItemDetail.querySelector('#journalItemId');
+
+            if (visualizationContainer && itemIdInput && itemIdInput.value) {
+                const itemId = itemIdInput.value;
+                const item = getWorkItem(itemId);
+                if (item && item.stateId) {
+                    console.log(`Re-rendering visualization for item ${itemId} with state ${item.stateId}`);
+                    // Clear the existing visualization content before re-creating
+                    visualizationContainer.innerHTML = '<div class="visualization-placeholder" style="text-align: center; padding: 30px; background: #f8f9fa; border-radius: 8px;"><p>Reloading visualization for new theme...</p></div>';
+                    // Re-create the visualization which will now use the new theme
+                    createWorkflowVisualization(visualizationContainer, item.stateId);
+                } else {
+                    console.warn('Could not find work item or stateId to re-render visualization.');
+                }
+            } else {
+                console.log('Visualization container or item ID not found in detail view.');
+            }
+        } else {
+            console.log('Work item detail view not active, no visualization update needed.');
+        }
+    }, 100); // 100ms delay might be needed for the attribute change to propagate
 }
 
 // Work items list rendering

@@ -167,19 +167,18 @@ function createWorkflowVisualization(container, currentStateId) {
                 }
 
                 // --- Theme Detection ---
-                // Check both html and body elements for the dark-mode class
-                const isDarkMode = document.documentElement.classList.contains('dark-mode') || document.body.classList.contains('dark-mode');
+                // Check the data-theme attribute on the html element
+                const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
                 // --- Add Logging ---
-                console.log(`Theme Check: documentElement classList = ${document.documentElement.classList}`);
-                console.log(`Theme Check: body classList = ${document.body.classList}`);
+                console.log(`Theme Check: data-theme = ${document.documentElement.getAttribute('data-theme')}`);
                 console.log(`Theme Check: isDarkMode = ${isDarkMode}`);
                 const themeColors = {
-                    background: isDarkMode ? '#212529' : '#f8f9fa', // Dark grey vs light grey
-                    linkRegular: isDarkMode ? '#6c757d' : '#999',   // Lighter grey vs grey
-                    linkValid: isDarkMode ? '#198754' : '#00b894',   // Darker green vs green
-                    arrowRegular: isDarkMode ? '#6c757d' : '#999',
-                    arrowValid: isDarkMode ? '#198754' : '#00b894',
-                    nodeText: isDarkMode ? '#f8f9fa' : '#fff'       // Light text vs white text
+                    background: isDarkMode ? '#343a40' : '#f8f9fa', // Dark grey vs light grey (match CSS)
+                    linkRegular: isDarkMode ? '#adb5bd' : '#adb5bd',   // Use --gray for both
+                    linkValid: isDarkMode ? '#00b894' : '#00b894',   // Use --secondary for both
+                    arrowRegular: isDarkMode ? '#adb5bd' : '#adb5bd', // Use --gray for both
+                    arrowValid: isDarkMode ? '#00b894' : '#00b894',   // Use --secondary for both
+                    nodeText: isDarkMode ? '#f8f9fa' : '#343a40'       // Light text vs dark text (match CSS)
                 };
                 console.log(`Theme Check: background color = ${themeColors.background}`);
                 // --- End Theme Detection ---
