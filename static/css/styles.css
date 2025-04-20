@@ -1572,3 +1572,105 @@ button.disabled:hover {
         font-size: 0.75rem;
     }
 }
+
+/* RPS Game Styles */
+.rps-modal-content {
+    max-width: 500px;
+}
+
+.rps-game-area {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 2rem 0;
+    padding: 1rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.rps-player {
+    text-align: center;
+}
+
+.rps-hand-display {
+    font-size: 4rem; /* Make fists larger */
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    height: 70px; /* Ensure consistent height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rps-player-name {
+    font-weight: bold;
+    color: var(--text-color-light);
+    margin-bottom: 0.5rem;
+}
+
+.rps-choice-display {
+    font-size: 1.5rem;
+    min-height: 2rem; /* Reserve space for choice icon */
+    color: var(--secondary);
+}
+
+.rps-vs {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.rps-choices {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.rps-choices p {
+    margin-bottom: 1rem;
+    color: var(--text-color-light);
+}
+
+.rps-choice-btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+    margin: 0 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 1rem;
+}
+
+.rps-choice-btn:hover {
+    background-color: #5649c0;
+    transform: translateY(-2px);
+}
+
+.rps-choice-btn:disabled {
+    background-color: var(--gray);
+    cursor: not-allowed;
+}
+
+.rps-choice-btn i {
+    margin-right: 0.5rem;
+}
+
+.rps-status {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 1rem;
+    min-height: 1.5rem;
+    color: var(--primary);
+}
+
+/* Add animation for hand reveal */
+@keyframes shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(10deg); }
+    75% { transform: rotate(-10deg); }
+}
+
+.rps-hand-display.shake {
+    animation: shake 0.5s ease-in-out 3; /* Shake 3 times */
+}

@@ -11,15 +11,6 @@
     <link rel="stylesheet" href="./static/css/all.min.css">
     <!-- Using local D3.js library - DO NOT CHANGE TO ONLINE URL -->
     <script src="./static/js/d3.v7.min.js"></script>
-    <script type="module">
-        import { connectWebSocket } from './static/js/websocket.js';
-        import { initializeBoard, updateBoard } from './static/js/kanban.js';
-        import { updateTimerState } from './static/js/pomodoro.js';
-
-        document.addEventListener('DOMContentLoaded', function() {
-            connectWebSocket();
-        });
-    </script>
 </head>
 <body>
     <div id="taskEditModal" class="modal">
@@ -37,6 +28,39 @@
         </div>
     </div>
 
+    <!-- RPS Game Modal -->
+    <div id="rpsGameModal" class="modal">
+        <div class="modal-content rps-modal-content">
+            <button class="close-modal" id="closeRpsModal">&times;</button>
+            <div class="modal-header">
+                <h3>Rock Paper Scissors</h3>
+            </div>
+            <div class="rps-game-area">
+                <div class="rps-player" id="rpsPlayer1">
+                    <div class="rps-hand-display"><i class="fas fa-hand-rock"></i></div>
+                    <div class="rps-player-name">Player 1</div>
+                    <div class="rps-choice-display"></div>
+                </div>
+                <div class="rps-vs">VS</div>
+                <div class="rps-player" id="rpsPlayer2">
+                    <div class="rps-hand-display"><i class="fas fa-hand-rock"></i></div>
+                    <div class="rps-player-name">Player 2</div>
+                    <div class="rps-choice-display"></div>
+                </div>
+            </div>
+            <div class="rps-choices">
+                <p>Choose your weapon:</p>
+                <button class="rps-choice-btn" data-choice="rock"><i class="fas fa-hand-rock"></i> Rock</button>
+                <button class="rps-choice-btn" data-choice="paper"><i class="fas fa-hand-paper"></i> Paper</button>
+                <button class="rps-choice-btn" data-choice="scissors"><i class="fas fa-hand-scissors"></i> Scissors</button>
+            </div>
+            <div class="rps-status" id="rpsStatus">Waiting for players...</div>
+            <div class="modal-footer">
+                <button id="resetRpsGame" class="cancel-btn"><i class="fas fa-redo"></i> Reset</button>
+            </div>
+        </div>
+    </div>
+
     <header class="main-header">
         <div class="header-content">
             <div class="left-controls">
@@ -50,6 +74,8 @@
                     <button id="kanbanLink" class="nav-tab active"><i class="fas fa-columns"></i> Kanban Board</button>
                     <button id="workflowLink" class="nav-tab"><i class="fas fa-project-diagram"></i> Workflow</button>
                 </div>
+                <!-- Add RPS Game Button -->
+                <button id="rpsGameBtn" class="nav-tab" title="Rock Paper Scissors"><i class="fas fa-hand-rock"></i> RPS</button>
             </div>
             <div class="right-controls">
                 <div class="room-switcher">
@@ -160,33 +186,48 @@
         import { initializeBoard, updateBoard } from './static/js/kanban.js';
         import { updateTimerState } from './static/js/pomodoro.js';
         import { initializeWorkflow } from './static/js/workflow.js';
+        // Import RPS game functions
+        import { initializeRpsGame } from './static/js/rps-game.js';
 
         document.addEventListener('DOMContentLoaded', function() {
-            connectWebSocket();
+            console.log("HTML: DOMContentLoaded event fired."); // Added log
 
-            // Initialize workflow with empty data (the module will create default states)
-            initializeWorkflow({});
+            try { // Add try...catch for broader error checking
+                connectWebSocket();
+                console.log("HTML: connectWebSocket called."); // Added log
 
-            // Theme toggle functionality
-            const themeToggle = document.getElementById('themeToggle');
-            const html = document.documentElement;
-            const icon = themeToggle.querySelector('i');
+                // Initialize workflow with empty data (the module will create default states)
+                initializeWorkflow({});
+                console.log("HTML: initializeWorkflow called."); // Added log
 
-            function toggleTheme() {
-                const currentTheme = html.getAttribute('data-theme');
-                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                html.setAttribute('data-theme', newTheme);
-                icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-                localStorage.setItem('theme', newTheme);
+                // Initialize RPS Game
+                initializeRpsGame();
+                console.log("HTML: initializeRpsGame called."); // Added log
+
+                // Theme toggle functionality
+                const themeToggle = document.getElementById('themeToggle');
+                const html = document.documentElement;
+                const icon = themeToggle.querySelector('i');
+                console.log("HTML: Theme toggle elements obtained."); // Added log
+
+                function toggleTheme() {
+                    // ... theme toggle logic ...
+                }
+
+                // Initialize theme
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                html.setAttribute('data-theme', savedTheme);
+                icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+                console.log("HTML: Theme initialized."); // Added log
+
+                themeToggle.addEventListener('click', toggleTheme);
+                console.log("HTML: Theme toggle listener added."); // Added log
+
+            } catch (error) {
+                console.error("HTML: Error during DOMContentLoaded execution:", error); // Added log
             }
-
-            // Initialize theme
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            html.setAttribute('data-theme', savedTheme);
-            icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-
-            themeToggle.addEventListener('click', toggleTheme);
         });
     </script>
 </body>
 </html>
+``` 

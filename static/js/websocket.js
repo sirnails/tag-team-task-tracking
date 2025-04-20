@@ -1,6 +1,8 @@
 import { initializeBoard, updateBoard, getTaskData, taskIdCounter } from './kanban.js';
 import { updateTimerState, resetTimerState } from './pomodoro.js';
 import { initializeWorkflow, updateWorkflow } from './workflow.js';
+// Import RPS handler
+import { handleRpsUpdate } from './rps-game.js';
 
 let socket;
 let messageQueue = []; // Queue to store messages until connection is ready
@@ -145,6 +147,10 @@ function setupSocket() {
                 console.log('Handling workflow update:', data.data);
                 updateWorkflow(data.data);
                 break;
+            case 'rps_update':
+                console.log('Handling RPS update:', data.data);
+                handleRpsUpdate(data.data);
+                break;
             case 'rooms':
                 console.log('Handling rooms update:', data.rooms);
                 updateRoomSelect(data.rooms);
@@ -276,4 +282,4 @@ document.addEventListener('DOMContentLoaded', () => {
 setupSocket();
 
 // Export functions for use in other modules
-export { setupSocket as connectWebSocket, sendUpdate, sendTimerUpdate, socket };
+export { setupSocket as connectWebSocket, sendUpdate, sendTimerUpdate, socket, safeSend };
