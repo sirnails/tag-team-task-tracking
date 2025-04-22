@@ -1,6 +1,6 @@
 // Workflow synchronization with server
 
-import { socket } from '../websocket.js';
+import { socket } from '../websocket/websocket.js';
 import { workflowState, updateWorkflowState, initializeDefaultWorkflow } from './state.js';
 import { workItems, updateWorkItemsData } from './items.js';
 

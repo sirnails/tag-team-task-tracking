@@ -1,15 +1,15 @@
 // workflow.js - Main entry point for workflow tracker functionality
 
 // Import all necessary modules
-import { socket } from './websocket.js';
+import { socket } from '../websocket/websocket.js';
 import { 
     workflowState, 
     initializeDefaultWorkflow 
-} from './workflow/state.js';
+} from './state.js';
 import { 
     workItems, 
     updateWorkItemsData 
-} from './workflow/items.js';
+} from './items.js';
 import { 
     getDOMElements, 
     setupEventListeners, 
@@ -17,15 +17,15 @@ import {
     showWorkItemDetail,
     showWorkflowConfigScreen,
     updateWorkItemDetailWithoutVisualization
-} from './workflow/ui.js';
+} from './ui.js';
 import { 
     sendWorkflowUpdate, 
     updateWorkflow, 
     initializeWorkflow as initWorkflow,
     reconnectWorkflow,
     registerUIFunctions
-} from './workflow/sync.js';
-import { safeSend } from './websocket.js'; // Add import for safeSend
+} from './sync.js';
+import { safeSend } from '../websocket/websocket.js'; // Add import for safeSend
 
 // Initialize workflow components - this is the main entry point 
 // that will be called from outside

@@ -1,6 +1,6 @@
 console.log("RPS: rps-game.js module loaded."); // Added log at the top
 
-import { safeSend } from './websocket.js'; // Assuming safeSend is exported
+import { safeSend } from '../websocket/websocket.js'; // Assuming safeSend is exported
 
 // DOM Elements
 let rpsModal = null;

@@ -1,4 +1,4 @@
-import { sendTimerUpdate } from './websocket.js';
+import { sendTimerUpdate } from '../websocket/websocket.js';
 
 const timerDisplay = document.getElementById('timer');
 const pomodoroToggle = document.getElementById('pomodoroToggle');

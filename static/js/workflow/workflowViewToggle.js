@@ -6,7 +6,7 @@ import {
     workflowLink 
 } from './workflowDOMElements.js';
 import { renderWorkflowItemsList } from './workflowItemsList.js';
-import { socket } from '../websocket.js'; // Add socket import
+import { socket } from '../websocket/websocket.js'; // Add socket import
 
 // Flag to track if we've already loaded workflow data
 let workflowDataLoaded = false;

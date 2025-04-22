@@ -10,7 +10,7 @@
     <!-- Using local Font Awesome CSS - DO NOT CHANGE TO ONLINE URL -->
     <link rel="stylesheet" href="./static/css/all.min.css">
     <!-- Using local D3.js library - DO NOT CHANGE TO ONLINE URL -->
-    <script src="./static/js/d3.v7.min.js"></script>
+    <script src="./static/js/d3/d3.v7.min.js"></script>
 </head>
 <body>
     <div id="taskEditModal" class="modal">
@@ -182,12 +182,12 @@
     </div>
 
     <script type="module">
-        import { connectWebSocket } from './static/js/websocket.js';
-        import { initializeBoard, updateBoard } from './static/js/kanban.js';
-        import { updateTimerState } from './static/js/pomodoro.js';
-        import { initializeWorkflow } from './static/js/workflow.js';
+        import { connectWebSocket } from './static/js/websocket/websocket.js';
+        import { initializeBoard, updateBoard } from './static/js/kanban/kanban.js';
+        import { updateTimerState } from './static/js/pomodoro/pomodoro.js';
+        import { initializeWorkflow } from './static/js/workflow/workflow.js';
         // Import RPS game functions
-        import { initializeRpsGame } from './static/js/rps-game.js';
+        import { initializeRpsGame } from './static/js/rps-game/rps-game.js';
 
         document.addEventListener('DOMContentLoaded', function() {
             console.log("HTML: DOMContentLoaded event fired."); // Added log

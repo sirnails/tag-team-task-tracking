@@ -1,8 +1,8 @@
-import { initializeBoard, updateBoard, getTaskData, taskIdCounter } from './kanban.js';
-import { updateTimerState, resetTimerState } from './pomodoro.js';
-import { initializeWorkflow, updateWorkflow } from './workflow.js';
+import { initializeBoard, updateBoard, getTaskData, taskIdCounter } from '../kanban/kanban.js';
+import { updateTimerState, resetTimerState } from '../pomodoro/pomodoro.js';
+import { initializeWorkflow, updateWorkflow } from '../workflow/workflow.js';
 // Import RPS handler
-import { handleRpsUpdate } from './rps-game.js';
+import { handleRpsUpdate } from '../rps-game/rps-game.js';
 
 let socket;
 let messageQueue = []; // Queue to store messages until connection is ready

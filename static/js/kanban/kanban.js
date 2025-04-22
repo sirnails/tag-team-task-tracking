@@ -1,5 +1,5 @@
-import { sendUpdate } from './websocket.js';
-import { stopTimer, updateStartButtonState } from './pomodoro.js';
+import { sendUpdate } from '../websocket/websocket.js';
+import { stopTimer, updateStartButtonState } from '../pomodoro/pomodoro.js';
 
 // DOM elements - grouped for better organization
 const DOM = {
