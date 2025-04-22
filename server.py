@@ -560,11 +560,35 @@ async def handle_rps_choice(ws, room, choice):
             })
         rps['active'] = False
 
+# Server-side addition to reset_rps_game function
+
 async def reset_rps_game(room, notify=True):
-    # Dummy handler for rps_reset messages
+    """Properly reset the RPS game state for the given room."""
     logging.info(f"Resetting RPS game in room '{room}' with notify={notify}")
-    # TODO: add your RPS game reset logic here
-    return
+    
+    # Get the RPS game state
+    rps = rooms_state[room].setdefault('rps_game', DEFAULT_RPS_STATE.copy())
+    
+    # Create a new clean state
+    rooms_state[room]['rps_game'] = {
+        'player1': None,
+        'player2': None,
+        'choices': {},
+        'active': False,
+        'player_map': {}
+    }
+    
+    # Notify clients of the reset if requested
+    if notify:
+        for client in clients[room]:
+            if not client.closed:
+                try:
+                    await client.send_json({
+                        'type': 'rps_update',
+                        'data': {'event': 'reset'}
+                    })
+                except Exception as e:
+                    logging.error(f"Error sending reset notification: {e}")
 
 async def websocket_handler(request):
     ws = web.WebSocketResponse()

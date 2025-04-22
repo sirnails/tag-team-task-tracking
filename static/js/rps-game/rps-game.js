@@ -105,12 +105,15 @@ function resetLocalGame() {
     opponentChoice = null;
     gameActive = false; // Will be set by server message
     myPlayerNumber = null; // Will be set by server message
-
+    
+    // Make sure to reset all UI elements
     if (rpsPlayer1Hand) rpsPlayer1Hand.innerHTML = `<i class="fas fa-hand-rock"></i>`;
     if (rpsPlayer2Hand) rpsPlayer2Hand.innerHTML = `<i class="fas fa-hand-rock"></i>`;
     if (rpsPlayer1ChoiceDisplay) rpsPlayer1ChoiceDisplay.textContent = '';
     if (rpsPlayer2ChoiceDisplay) rpsPlayer2ChoiceDisplay.textContent = '';
     if (rpsStatus) rpsStatus.textContent = 'Waiting for players...';
+    
+    // Reset button states
     if (rpsChoiceBtns) {
         rpsChoiceBtns.forEach(btn => {
             btn.disabled = true; // Disable buttons initially
@@ -163,56 +166,57 @@ function revealResults(player1Choice, player2Choice, winner) {
 
 // Called from websocket.js when an RPS message arrives
 export function handleRpsUpdate(data) {
-    // Log the raw data received
-    console.log("RPS: handleRpsUpdate received data:", JSON.stringify(data)); // Added log
-
-    switch (data.event) {
-        case 'game_start':
-            console.log("RPS: Received 'game_start' event."); // Added log
-            gameActive = true;
-            myPlayerNumber = data.playerNumber;
-            myChoice = null; // Ensure choice is reset for new game
-            opponentChoice = null;
-            updateStatus(`You are Player ${myPlayerNumber}. Choose your weapon!`);
+    console.log("RPS: handleRpsUpdate received data:", JSON.stringify(data));
+    
+    if (data.event === 'game_start') {
+        console.log("RPS: Received 'game_start' event.");
+        myPlayerNumber = data.playerNumber;
+        gameActive = true;
+        
+        // Enable choice buttons since game is now active
+        if (rpsChoiceBtns) {
             rpsChoiceBtns.forEach(btn => {
-                btn.disabled = false; // Enable choice buttons
+                btn.disabled = false;
             });
-            console.log("RPS: Choice buttons enabled for game start."); // Added log
-            // Reset visual choices if any
-            if (rpsPlayer1Hand) rpsPlayer1Hand.innerHTML = `<i class="fas fa-hand-rock"></i>`;
-            if (rpsPlayer2Hand) rpsPlayer2Hand.innerHTML = `<i class="fas fa-hand-rock"></i>`;
-            if (rpsPlayer1ChoiceDisplay) rpsPlayer1ChoiceDisplay.textContent = '';
-            if (rpsPlayer2ChoiceDisplay) rpsPlayer2ChoiceDisplay.textContent = '';
-            break;
-        case 'opponent_chosen':
-            console.log("RPS: Received 'opponent_chosen' event."); // Added log
-            // Opponent has made their choice, but don't reveal it yet
-            updateStatus("Opponent has chosen. Waiting for reveal...");
-            break;
-        case 'reveal':
-            console.log("RPS: Received 'reveal' event."); // Added log
-            revealResults(data.player1Choice, data.player2Choice, data.winner);
-            break;
-        case 'reset':
-            console.log("RPS: Received 'reset' event."); // Added log
-            resetLocalGame();
-            updateStatus("Game reset. Waiting for players...");
-            break;
-        case 'waiting':
-            console.log("RPS: Received 'waiting' event."); // Added log
-            resetLocalGame(); // Ensure clean state while waiting
-            updateStatus("Waiting for another player...");
-            break;
-        case 'error':
-            console.error(`RPS: Received 'error' event: ${data.message}`); // Added log
-            updateStatus(`Error: ${data.message}`);
-            gameActive = false;
-            rpsChoiceBtns.forEach(btn => btn.disabled = true);
-            console.log("RPS: Choice buttons disabled due to error."); // Added log
-            break;
-        default:
-            console.warn("RPS: Received unknown event type:", data.event); // Added log
-            break;
+            console.log("RPS: Choice buttons enabled for game start.");
+        }
+        
+        updateStatus(`You are Player ${myPlayerNumber}. Choose your weapon!`);
+    } else if (data.event === 'reveal') {
+        console.log("RPS: Received 'reveal' event.");
+        revealResults(data.player1Choice, data.player2Choice, data.winner);
+    } else if (data.event === 'reset' || data.event === 'game_reset') {
+        // Handle reset event from server - this is called for BOTH players
+        console.log("RPS: Received game reset confirmation from server.");
+        resetLocalGame();
+        gameActive = false;
+        myPlayerNumber = null;
+        updateStatus('Game reset. Waiting for players...');
+
+        // Automatically try to join the new game after a short delay
+        setTimeout(() => {
+            console.log("RPS: Auto-rejoining after server reset notification.");
+            if (rpsModal && rpsModal.style.display === 'block') { // Only rejoin if the modal is open
+                const joinMsg = JSON.stringify({ type: 'rps_join' });
+                safeSend(joinMsg);
+            }
+        }, 1000);
+    } else if (data.event === 'opponent_chosen') {
+        console.log("RPS: Received 'opponent_chosen' event."); // Added log
+        // Opponent has made their choice, but don't reveal it yet
+        updateStatus("Opponent has chosen. Waiting for reveal...");
+    } else if (data.event === 'waiting') {
+        console.log("RPS: Received 'waiting' event."); // Added log
+        resetLocalGame(); // Ensure clean state while waiting
+        updateStatus("Waiting for another player...");
+    } else if (data.event === 'error') {
+        console.error(`RPS: Received 'error' event: ${data.message}`); // Added log
+        updateStatus(`Error: ${data.message}`);
+        gameActive = false;
+        rpsChoiceBtns.forEach(btn => btn.disabled = true);
+        console.log("RPS: Choice buttons disabled due to error."); // Added log
+    } else {
+        console.warn("RPS: Received unknown event type:", data.event); // Added log
     }
 }
 
@@ -257,10 +261,53 @@ export function initializeRpsGame() {
     if (resetRpsGameBtn) {
         resetRpsGameBtn.addEventListener('click', () => {
             console.log("RPS: Reset button clicked. Sending reset request."); // Added log
+            
+            // Disable the reset button temporarily
+            resetRpsGameBtn.disabled = true;
+            
+            // Reset local UI immediately
+            resetLocalGame();
+            
             // Send reset request to server
-            safeSend(JSON.stringify({ type: 'rps_reset' }));
-            // Optionally reset local UI immediately, or wait for server confirmation
-            // resetLocalGame();
+            const resetMsg = JSON.stringify({ type: 'rps_reset' });
+            safeSend(resetMsg);
+            
+            // Update status message
+            updateStatus('Game resetting... Please wait.');
+            
+            // Force a clean game state by completely re-initializing
+            setTimeout(() => {
+                console.log("RPS: Completely reinitializing game state");
+                
+                // Close the modal
+                if (rpsModal) {
+                    rpsModal.style.display = 'none';
+                }
+                
+                // Reset state variables
+                myChoice = null;
+                opponentChoice = null;
+                gameActive = false;
+                myPlayerNumber = null;
+                
+                // Reopen modal with a slight delay
+                setTimeout(() => {
+                    if (rpsModal) {
+                        console.log("RPS: Reopening modal with fresh state");
+                        rpsModal.style.display = 'block';
+                        
+                        // Re-enable the reset button
+                        resetRpsGameBtn.disabled = false;
+                        
+                        // Send join message to start a new game
+                        const joinMsg = JSON.stringify({ type: 'rps_join' });
+                        safeSend(joinMsg);
+                        
+                        // Update status to show we're waiting for another player
+                        updateStatus('Waiting for another player...');
+                    }
+                }, 500);
+            }, 500);
         });
     }
 
