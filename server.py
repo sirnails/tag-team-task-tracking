@@ -332,6 +332,10 @@ async def handle_message(ws, msg, room, room_state):
             await handle_delete_room_request(ws, data)
         elif data['type'] == 'workflow_update':
             await handle_workflow_update(ws, data, room, room_state)
+        elif data['type'] == 'get_workflow_data':
+            await handle_get_workflow_data(ws, room, room_state)
+        elif data['type'] == 'get_rooms':
+            await handle_get_rooms(ws)
         else:
             logging.warning(f"Unknown message type received in room '{room}': {data['type']}")
 
@@ -339,6 +343,146 @@ async def handle_message(ws, msg, room, room_state):
         logging.error(f"Received non-JSON message in room '{room}': {msg.data}")
     except Exception as e:
         logging.exception(f"Error handling message in room '{room}': {e}")
+
+async def handle_get_workflow_data(ws, room, room_state):
+    """Handles requests for workflow data."""
+    try:
+        # Send back the current workflow state and work items for this room
+        await ws.send_json({
+            'type': 'workflow_update',
+            'data': {
+                'workflow': room_state['workflow'],
+                'workItems': room_state['workItems']
+            }
+        })
+        logging.info(f"Sent workflow data to client in room '{room}'")
+    except Exception as e:
+        logging.exception(f"Error handling get_workflow_data in room '{room}': {e}")
+
+async def handle_get_rooms(ws):
+    """Handles requests for available rooms."""
+    try:
+        # Get list of active rooms
+        existing_rooms = set(['default'] + [
+            room for room in rooms_state.keys() 
+            if room != 'default' and room not in deleted_rooms
+        ])
+        room_list = sorted(list(existing_rooms))
+        
+        # Send room list to the requesting client
+        await ws.send_json({
+            'type': 'rooms',
+            'rooms': room_list
+        })
+        logging.info(f"Sent room list to client: {room_list}")
+    except Exception as e:
+        logging.exception(f"Error handling get_rooms: {e}")
+
+async def handle_delete_room_request(ws, data):
+    """Handles requests to delete a room."""
+    try:
+        room = data.get('room')
+        if not room:
+            await ws.send_json({'type': 'error', 'message': 'No room specified for deletion'})
+            return
+            
+        success, error = await handle_room_deletion(room)
+        
+        if success:
+            await ws.send_json({'type': 'room_deleted', 'room': room})
+        else:
+            await ws.send_json({'type': 'error', 'message': error or 'Unknown error deleting room'})
+    except Exception as e:
+        logging.exception(f"Error handling delete_room_request: {e}")
+        await ws.send_json({'type': 'error', 'message': str(e)})
+
+async def handle_workflow_update(ws, data, room, room_state):
+    """Handles workflow state updates from clients."""
+    try:
+        if 'data' in data and isinstance(data['data'], dict):
+            workflow_data = data['data']
+            
+            # Update workflow state
+            if 'workflow' in workflow_data:
+                room_state['workflow'] = workflow_data['workflow']
+                logging.info(f"Updated workflow state in room '{room}'")
+            
+            # Update work items
+            if 'workItems' in workflow_data:
+                room_state['workItems'] = workflow_data['workItems']
+                logging.info(f"Updated {len(workflow_data['workItems'])} work items in room '{room}'")
+            
+            # Save changes to disk
+            await save_room_states()
+            
+            # Broadcast the update to all other clients in the room
+            for client in clients[room]:
+                if client != ws and not client.closed:
+                    try:
+                        await client.send_json({
+                            'type': 'workflow_update',
+                            'data': {
+                                'workflow': room_state['workflow'],
+                                'workItems': room_state['workItems']
+                            }
+                        })
+                    except Exception as e:
+                        logging.error(f"Error broadcasting workflow update: {e}")
+    except Exception as e:
+        logging.exception(f"Error handling workflow update in room '{room}': {e}")
+
+async def handle_board_update(ws, data, room, room_state):
+    """Handles board state updates from clients."""
+    if 'data' in data:
+        board_data = data['data']
+        
+        # Update the board state fields
+        if 'todo' in board_data:
+            room_state['todo'] = board_data['todo']
+        if 'inProgress' in board_data:
+            room_state['inProgress'] = board_data['inProgress']
+        if 'done' in board_data:
+            room_state['done'] = board_data['done']
+        if 'taskIdCounter' in board_data:
+            room_state['taskIdCounter'] = board_data['taskIdCounter']
+        if 'currentTask' in board_data:
+            room_state['currentTask'] = board_data['currentTask']
+        
+        # Save changes to disk
+        await save_room_states()
+        
+        # Broadcast the update to all other clients in the room
+        for client in clients[room]:
+            if client != ws and not client.closed:
+                try:
+                    await client.send_json({
+                        'type': 'update',
+                        'data': {
+                            'todo': room_state['todo'],
+                            'inProgress': room_state['inProgress'],
+                            'done': room_state['done'],
+                            'taskIdCounter': room_state['taskIdCounter'],
+                            'currentTask': room_state['currentTask']
+                        }
+                    })
+                except Exception as e:
+                    logging.error(f"Error broadcasting update: {e}")
+
+async def handle_timer_update(ws, data, room, room_state):
+    """Handles timer state updates from clients."""
+    if 'timer' in data:
+        timer_data = data['timer']
+        timer_state, save_needed = TimerManager.handle_timer_update(
+            room_state['timer'], timer_data, room
+        )
+        
+        room_state['timer'] = timer_state
+        
+        if save_needed:
+            await save_room_states()
+        
+        # Broadcast the timer update to all clients in the room
+        await broadcast_timer_update(room)
 
 async def handle_rps_join(ws, room):
     """Assigns ws as player1 or player2 and notifies both when game starts."""

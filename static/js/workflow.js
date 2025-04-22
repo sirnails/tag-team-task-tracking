@@ -25,6 +25,7 @@ import {
     reconnectWorkflow,
     registerUIFunctions
 } from './workflow/sync.js';
+import { safeSend } from './websocket.js'; // Add import for safeSend
 
 // Initialize workflow components - this is the main entry point 
 // that will be called from outside
@@ -43,7 +44,21 @@ function initializeWorkflow(data) {
         renderWorkItemsList();
         
         console.log('UI setup complete');
+        
+        // If we got empty data, request workflow data from the server
+        if (!data || !data.workflow || !data.workItems || data.workItems.length === 0) {
+            requestWorkflowData();
+        }
     };
+    
+    // Function to request workflow data from the server
+    function requestWorkflowData() {
+        console.log('Requesting initial workflow data from server');
+        safeSend(JSON.stringify({
+            type: 'get_workflow_data',
+            data: { clientId: localStorage.getItem('clientId') || 'unknown' }
+        }));
+    }
     
     // Check if document is already loaded
     if (document.readyState === 'loading') {
@@ -98,21 +113,6 @@ function initializeWorkflow(data) {
             }
         }
     });
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 };
 
 // Export all necessary functions and objects for external use

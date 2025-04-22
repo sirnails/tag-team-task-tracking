@@ -637,6 +637,11 @@ button i {
     pointer-events: all;
 }
 
+/* Add modal.show class to make modals visible when toggled */
+.modal.show {
+    display: block;
+}
+
 .modal-content {
     background: var(--component-bg);
     margin: 15% auto;
