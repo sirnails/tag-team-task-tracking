@@ -73,9 +73,11 @@
                 <div class="nav-tabs">
                     <button id="kanbanLink" class="nav-tab active"><i class="fas fa-columns"></i> Kanban Board</button>
                     <button id="workflowLink" class="nav-tab"><i class="fas fa-project-diagram"></i> Workflow</button>
+                    <!-- Badge System Button - Styled to match other navigation items -->
+                    <button id="badgeSystemBtn" class="nav-tab" title="Badge Collection System"><i class="fas fa-medal"></i> Badges</button>
+                    <!-- RPS Game Button -->
+                    <button id="rpsGameBtn" class="nav-tab" title="Rock Paper Scissors"><i class="fas fa-hand-rock"></i> RPS</button>
                 </div>
-                <!-- Add RPS Game Button -->
-                <button id="rpsGameBtn" class="nav-tab" title="Rock Paper Scissors"><i class="fas fa-hand-rock"></i> RPS</button>
             </div>
             <div class="right-controls">
                 <div class="room-switcher">
@@ -179,6 +181,42 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Badge System Content - Hidden by default -->
+        <div id="badgeContent" style="display: none;">
+            <div class="badge-container">
+                <div class="badge-section">
+                    <div class="badge-header">
+                        <h2><i class="fas fa-medal"></i> Badge Collection System</h2>
+                    </div>
+                    <div class="badge-content">
+                        <h3>Welcome to the Badge System</h3>
+                        <p>This system allows team members to recognize each other's skills and achievements.</p>
+                        <div class="badge-grid">
+                            <div class="badge-card">
+                                <div class="badge-icon"><i class="fas fa-star"></i></div>
+                                <h3>VHDL Design Master</h3>
+                                <p>Awarded for excellence in VHDL design practices</p>
+                            </div>
+                            <div class="badge-card">
+                                <div class="badge-icon"><i class="fas fa-code"></i></div>
+                                <h3>RTL Wizard</h3>
+                                <p>Demonstrates exceptional RTL coding skills</p>
+                            </div>
+                            <div class="badge-card">
+                                <div class="badge-icon"><i class="fas fa-bug"></i></div>
+                                <h3>Bug Hunter</h3>
+                                <p>Finds and fixes elusive bugs that others miss</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="badge-content">
+                        <h3>Coming Soon!</h3>
+                        <p>More badge system features are under development.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -204,6 +242,46 @@
                 initializeRpsGame();
                 console.log("HTML: initializeRpsGame called."); // Added log
 
+                // Add view toggle functionality for all tabs
+                const kanbanLink = document.getElementById('kanbanLink');
+                const workflowLink = document.getElementById('workflowLink');
+                const badgeSystemBtn = document.getElementById('badgeSystemBtn');
+                
+                // Kanban View Toggle
+                kanbanLink.addEventListener('click', function() {
+                    document.getElementById('kanbanContent').style.display = 'block';
+                    document.getElementById('workflowContent').style.display = 'none';
+                    document.getElementById('badgeContent').style.display = 'none';
+                    
+                    // Update active tab
+                    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                    kanbanLink.classList.add('active');
+                });
+                
+                // Workflow View Toggle
+                workflowLink.addEventListener('click', function() {
+                    document.getElementById('kanbanContent').style.display = 'none';
+                    document.getElementById('workflowContent').style.display = 'block';
+                    document.getElementById('badgeContent').style.display = 'none';
+                    
+                    // Update active tab
+                    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                    workflowLink.classList.add('active');
+                });
+                
+                // Badge System Toggle
+                badgeSystemBtn.addEventListener('click', function() {
+                    document.getElementById('kanbanContent').style.display = 'none';
+                    document.getElementById('workflowContent').style.display = 'none';
+                    document.getElementById('badgeContent').style.display = 'block';
+                    
+                    // Update active tab
+                    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                    badgeSystemBtn.classList.add('active');
+                });
+                
+                console.log("HTML: Navigation tabs initialized."); // Added log
+
                 // Theme toggle functionality
                 const themeToggle = document.getElementById('themeToggle');
                 const html = document.documentElement;
@@ -211,7 +289,15 @@
                 console.log("HTML: Theme toggle elements obtained."); // Added log
 
                 function toggleTheme() {
-                    // ... theme toggle logic ...
+                    if (html.getAttribute('data-theme') === 'light') {
+                        html.setAttribute('data-theme', 'dark');
+                        icon.className = 'fas fa-sun';
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        html.setAttribute('data-theme', 'light');
+                        icon.className = 'fas fa-moon';
+                        localStorage.setItem('theme', 'light');
+                    }
                 }
 
                 // Initialize theme

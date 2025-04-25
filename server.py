@@ -39,6 +39,11 @@ from server.server_index_handler import server_index_handler
 from server.server_start_server import server_start_server
 from server.server_run_server import server_run_server
 
+# Import badge system handlers
+from server.server_badge_handler import handle_badge_data_request, handle_badge_update, load_badge_data
+from server.server_badge_websocket_handler import server_badge_websocket_handler
+from server.server_badge_page_handler import server_badge_page_handler
+
 # Initialize server state
 try:
     loaded_state = server_load_room_states()
@@ -49,7 +54,43 @@ except Exception as e:
     logging.error(f"Failed to initialize room state: {e}")
     # We'll continue with the empty defaultdict initialized in server_state.py
 
-# Clients and deleted_rooms are already initialized in server_state.py
+# Initialize badge data
+try:
+    load_badge_data()
+    logging.info("Badge data initialized")
+except Exception as e:
+    logging.error(f"Failed to initialize badge data: {e}")
+
+# Update server_start_server to include badge routes
+def server_start_server():
+    """Start the web server with all routes configured."""
+    try:
+        app = web.Application()
+        
+        # Configure CORS to allow all origins
+        cors = aiohttp.web.middleware.normalize_path_middleware()
+        app.middlewares.append(cors)
+        
+        # WebSocket route
+        app.router.add_get('/ws', server_websocket_handler)
+        
+        # Badge WebSocket route - separate handler for badge functionality
+        app.router.add_get('/badge-ws', server_badge_websocket_handler)
+        
+        # HTTP routes for static files
+        app.router.add_static('/static/', path='static/', name='static')
+        
+        # Route for the main page
+        app.router.add_get('/', server_index_handler)
+        
+        # API route for badge data
+        app.router.add_get('/api/badges', handle_badge_data_request)
+        
+        return app
+        
+    except Exception as e:
+        logging.error(f"Failed to start server: {e}")
+        raise
 
 # Use run_server function directly - this is the entry point
 if __name__ == '__main__':

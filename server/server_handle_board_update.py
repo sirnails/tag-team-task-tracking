@@ -1,40 +1,41 @@
+import json
 import logging
-from server.server_state import clients
-from server.server_save_room_states import server_save_room_states
+import server.server_state as server_state
 
 async def server_handle_board_update(ws, data, room, room_state):
     """Handles board state updates from clients."""
-    if 'data' in data:
+    try:
+        if not data or not data.get('data'):
+            logging.error(f"Invalid board update data received in room '{room}'")
+            return
+
+        # Extract board data
         board_data = data['data']
         
-        # Update the board state fields
-        if 'todo' in board_data:
-            room_state['todo'] = board_data['todo']
-        if 'inProgress' in board_data:
-            room_state['inProgress'] = board_data['inProgress']
-        if 'done' in board_data:
-            room_state['done'] = board_data['done']
-        if 'taskIdCounter' in board_data:
-            room_state['taskIdCounter'] = board_data['taskIdCounter']
-        if 'currentTask' in board_data:
-            room_state['currentTask'] = board_data['currentTask']
+        # Update room state with new board data
+        if 'board' not in room_state:
+            room_state['board'] = {}
         
-        # Save changes to disk
-        await server_save_room_states()
+        room_state['board'].update(board_data)
         
-        # Broadcast the update to all other clients in the room
-        for client in clients[room]:
-            if client != ws and not client.closed:
-                try:
-                    await client.send_json({
+        # Broadcast the update to all clients in the room
+        try:
+            # Use connections[room] instead of clients[room]
+            for client in server_state.connections[room]:
+                if client != ws:  # Don't send back to the sender
+                    await client.send_str(json.dumps({
                         'type': 'update',
                         'data': {
-                            'todo': room_state['todo'],
-                            'inProgress': room_state['inProgress'],
-                            'done': room_state['done'],
-                            'taskIdCounter': room_state['taskIdCounter'],
-                            'currentTask': room_state['currentTask']
+                            'todo': room_state['board'].get('todo', []),
+                            'inProgress': room_state['board'].get('inProgress', []),
+                            'done': room_state['board'].get('done', []),
+                            'taskIdCounter': room_state['board'].get('taskIdCounter', 0)
                         }
-                    })
-                except Exception as e:
-                    logging.error(f"Error broadcasting update: {e}")
+                    }))
+        except Exception as e:
+            logging.error(f"Error broadcasting update: {e}")
+            
+        logging.debug(f"Board update processed for room '{room}'")
+            
+    except Exception as e:
+        logging.error(f"Error handling board update: {e}")

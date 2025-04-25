@@ -13,7 +13,8 @@ from server.server_handle_get_rooms import server_handle_get_rooms
 async def server_handle_message(ws, msg, room, room_state):
     """Handles incoming websocket messages."""
     try:
-        data = json.loads(msg.data)
+        # The msg parameter is already a dict, so we don't need to parse it
+        data = msg  # Use the dictionary directly instead of parsing JSON
         logging.debug(f"Server received message type: {data.get('type')} in room '{room}'")
 
         if data['type'] == 'update':
@@ -39,6 +40,6 @@ async def server_handle_message(ws, msg, room, room_state):
             logging.warning(f"Unknown message type received in room '{room}': {data['type']}")
 
     except json.JSONDecodeError:
-        logging.error(f"Received non-JSON message in room '{room}': {msg.data}")
+        logging.error(f"Received non-JSON message in room '{room}': {msg}")
     except Exception as e:
         logging.exception(f"Error handling message in room '{room}': {e}")
