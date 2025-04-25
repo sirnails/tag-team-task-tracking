@@ -11,8 +11,14 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
     
     console.log('Received timer state:', timerState);
     if (!timerState) {
+        console.error('Invalid timer state received');
         return;
     }
+    
+    // Dispatch event for other components to react to timer state changes
+    document.dispatchEvent(new CustomEvent('pomodoroStateChanged', { 
+        detail: { timerState, isRunning: !!timerState.isRunning } 
+    }));
     
     // Update total time if provided and valid
     if (timerState.totalTime) {
@@ -30,13 +36,18 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
         '<i class="fas fa-stop"></i> Stop' : 
         '<i class="fas fa-play"></i> Start';
     
-    // Handle end time when timer is running
+    // Add visual indicator for sync status
+    const timerDisplay = document.getElementById('timer');
+    timerDisplay.classList.toggle('synced', true);
+    setTimeout(() => timerDisplay.classList.toggle('synced', false), 1000);
+    
     if (newIsRunning) {
         if (timerState.endTime) {
             // Store server end time (ensure it's a number)
             const serverEndTime = safeNumberConversion(timerState.endTime, null);
             
             if (serverEndTime) {
+                console.log(`Syncing to server endTime: ${new Date(serverEndTime * 1000).toISOString()}`);
                 setEndTime(serverEndTime);
                 
                 // Calculate current time left based on end time
@@ -53,19 +64,19 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
                     startPomodoroTimerUpdates(newIsRunning, serverEndTime, totalTime, DEFAULT_TOTAL_TIME, setIsRunning, setEndTime);
                 }
             } else {
-                // If server sent an invalid end time, create a new one
-                console.warn('Invalid endTime from server, creating new one');
+                console.error('Invalid endTime from server:', timerState.endTime);
+                // If server sent an invalid end time, create a new one and broadcast it
                 const newEndTime = (Date.now() / 1000) + totalTime;
                 setEndTime(newEndTime);
                 sendTimerUpdate({
                     isRunning: true,
                     totalTime: totalTime,
                     endTime: newEndTime
-                });
+                }, true); // Force sync to all clients
                 startPomodoroTimerUpdates(newIsRunning, newEndTime, totalTime, DEFAULT_TOTAL_TIME, setIsRunning, setEndTime);
             }
         } else {
-            // No end time but timer is running - create one
+            // No end time but timer is running - create one and broadcast it
             console.warn('No endTime but timer running, creating one');
             const newEndTime = (Date.now() / 1000) + totalTime;
             setEndTime(newEndTime);
@@ -73,7 +84,7 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
                 isRunning: true,
                 totalTime: totalTime,
                 endTime: newEndTime
-            });
+            }, true); // Force sync to all clients
             startPomodoroTimerUpdates(newIsRunning, newEndTime, totalTime, DEFAULT_TOTAL_TIME, setIsRunning, setEndTime);
         }
     } else {

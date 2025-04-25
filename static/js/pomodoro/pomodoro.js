@@ -31,6 +31,13 @@ const setEndTime = (value) => endTime = value;
 // Event listener
 pomodoroToggle.addEventListener('click', () => togglePomodoroTimer(isRunning, setIsRunning, totalTime, setEndTime));
 
+// New: Request timer state on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Requesting initial timer state');
+    // Request current timer state from server
+    sendTimerUpdate({ requestSync: true });
+});
+
 // Initialize timer display
 updatePomodoroTimer(totalTime, totalTime);
 updatePomodoroProgress(0, totalTime, DEFAULT_TOTAL_TIME);
@@ -42,6 +49,11 @@ if (Notification.permission !== 'granted') {
 
 // Initialize start button state
 document.addEventListener('DOMContentLoaded', updatePomodoroButtonState);
+
+// Log state changes for debugging
+document.addEventListener('pomodoroStateChanged', (e) => {
+    console.log(`Pomodoro state changed: isRunning=${e.detail.isRunning}`);
+});
 
 // Wrapper functions that use the module state
 const updateTimerState = (timerState) => updatePomodoroTimerState(

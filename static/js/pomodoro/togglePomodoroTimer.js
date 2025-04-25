@@ -13,6 +13,7 @@ export function togglePomodoroTimer(isRunning, setIsRunning, totalTime, setEndTi
     
     // If trying to start with no task, don't proceed
     if (!isRunning && !hasTask) {
+        console.log('Cannot start timer: No task in progress');
         return;
     }
     
@@ -21,6 +22,8 @@ export function togglePomodoroTimer(isRunning, setIsRunning, totalTime, setEndTi
         stopPomodoroTimer(isRunning, setIsRunning, totalTime, setEndTime);
         return;
     }
+    
+    console.log('Starting Pomodoro timer');
     
     // Otherwise, we're starting the timer
     setIsRunning(true);
@@ -32,14 +35,19 @@ export function togglePomodoroTimer(isRunning, setIsRunning, totalTime, setEndTi
     const newEndTime = (Date.now() / 1000) + totalTime;
     setEndTime(newEndTime);
     
-    // Send update to server
+    // Send update to server with force sync flag to ensure all clients update
     sendTimerUpdate({
         isRunning: true,
         totalTime: totalTime,
         elapsedTime: 0,
         endTime: newEndTime
-    });
+    }, true);
     
     // Start client-side timer updates
     startPomodoroTimerUpdates(true, newEndTime, totalTime, totalTime, setIsRunning, setEndTime);
+    
+    // Visual feedback
+    const timerDisplay = document.getElementById('timer');
+    timerDisplay.classList.add('timer-started');
+    setTimeout(() => timerDisplay.classList.remove('timer-started'), 1000);
 }

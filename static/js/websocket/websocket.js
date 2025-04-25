@@ -9,6 +9,26 @@ import { wsHandleRoomDeletionRequest } from './wsHandleRoomDeletionRequest.js';
 import { wsSendUpdate } from './wsSendUpdate.js';
 import { wsSendTimerUpdate } from './wsSendTimerUpdate.js';
 
+// Enhanced timer update function with fixed message type to match server expectations
+export function sendTimerUpdate(timerState, forceSync = false) {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        console.error('Cannot send timer update: WebSocket not connected');
+        return;
+    }
+    
+    const message = {
+        type: 'timer', // Changed from 'timer_update' to 'timer' to match server expectation
+        data: {
+            ...timerState,
+            forceSync: forceSync, // Flag to ensure all clients sync
+            timestamp: Date.now() // Add timestamp for logging/debugging
+        }
+    };
+    
+    console.log('Sending timer update:', message);
+    socket.send(JSON.stringify(message));
+}
+
 // Initialize event listeners
 document.addEventListener('DOMContentLoaded', () => {
     const roomSelect = document.getElementById('roomSelect');
@@ -44,7 +64,6 @@ wsSetupSocket();
 export { 
     wsSetupSocket as connectWebSocket, 
     wsSendUpdate as sendUpdate, 
-    wsSendTimerUpdate as sendTimerUpdate, 
     socket, 
     wsSafeSend as safeSend,
     setSocketReference

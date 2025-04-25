@@ -333,6 +333,28 @@ button i {
     color: var(--text-color);
     font-family: 'Courier New', monospace;
     letter-spacing: 2px;
+    transition: all 0.3s ease;
+}
+
+.pomodoro-timer.synced {
+    color: var(--secondary);
+    transform: scale(1.05);
+}
+
+.pomodoro-timer.timer-started {
+    color: var(--secondary);
+    animation: pulsate 1s ease-out;
+}
+
+.pomodoro-timer.timer-stopped {
+    color: var(--primary);
+    animation: pulsate 1s ease-out;
+}
+
+@keyframes pulsate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
 .progress-container {
