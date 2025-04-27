@@ -24,3 +24,6 @@ server/__pycache__/server_state.cpython-312.pyc
 server/__pycache__/server_timer_manager.cpython-312.pyc
 server/__pycache__/server_update_timer.cpython-312.pyc
 server/__pycache__/server_websocket_handler.cpython-312.pyc
+server/__pycache__/server_badge_page_handler.cpython-312.pyc
+server/__pycache__/server_badge_handler.cpython-312.pyc
+server/__pycache__/server_badge_websocket_handler.cpython-312.pyc
