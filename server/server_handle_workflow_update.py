@@ -1,5 +1,5 @@
 import logging
-from server.server_state import clients
+from server.server_state import clients, rooms_state  # Added import for rooms_state
 from server.server_save_room_states import server_save_room_states
 
 async def server_handle_workflow_update(ws, data, room, room_state):
@@ -18,21 +18,27 @@ async def server_handle_workflow_update(ws, data, room, room_state):
                 room_state['workItems'] = workflow_data['workItems']
                 logging.info(f"Updated {len(workflow_data['workItems'])} work items in room '{room}'")
             
-            # Save changes to disk
-            await server_save_room_states()
+            try:
+                # Save changes to disk
+                await server_save_room_states()
+            except Exception as e:
+                logging.error(f"Error saving room states: {e}")
             
-            # Broadcast the update to all other clients in the room
-            for client in clients[room]:
-                if client != ws and not client.closed:
-                    try:
-                        await client.send_json({
-                            'type': 'workflow_update',
-                            'data': {
-                                'workflow': room_state['workflow'],
-                                'workItems': room_state['workItems']
-                            }
-                        })
-                    except Exception as e:
-                        logging.error(f"Error broadcasting workflow update: {e}")
+            # Safely broadcast the update to all other clients in the room
+            if room in clients:
+                for client in clients[room]:
+                    if client != ws and not client.closed:
+                        try:
+                            await client.send_json({
+                                'type': 'workflow_update',
+                                'data': {
+                                    'workflow': room_state['workflow'],
+                                    'workItems': room_state['workItems']
+                                }
+                            })
+                        except Exception as e:
+                            logging.error(f"Error broadcasting workflow update: {e}")
+            else:
+                logging.warning(f"Room '{room}' not found in clients dictionary, cannot broadcast updates")
     except Exception as e:
         logging.exception(f"Error handling workflow update in room '{room}': {e}")

@@ -1,8 +1,8 @@
-import { rpsPlayer1Hand, rpsPlayer2Hand, choiceIcons, updateRpsGameState } from './rps-shared-state.js';
+import { rpsPlayer1Hand, rpsPlayer2Hand, choiceIcons, updateRpsGameState, myPlayerNumber } from './rps-shared-state.js';
 import { rpsUpdateStatus } from './rps-update-status.js';
 
-export function rpsRevealResults(player1Choice, player2Choice, winner) {
-    console.log(`RPS: revealResults called. P1: ${player1Choice}, P2: ${player2Choice}, Winner: ${winner}`); // Added log
+export function rpsRevealResults(player1Choice, player2Choice, winner, winnerNumber) {
+    console.log(`RPS: revealResults called. P1: ${player1Choice}, P2: ${player2Choice}, Winner: ${winner}, WinnerNum: ${winnerNumber}`);
     updateRpsGameState({ gameActive: false }); // Game ended
 
     // 1. Animate hands (shake)
@@ -19,25 +19,20 @@ export function rpsRevealResults(player1Choice, player2Choice, winner) {
             rpsPlayer2Hand.classList.remove('shake');
             rpsPlayer2Hand.innerHTML = `<i class="fas ${choiceIcons[player2Choice] || 'fa-question'}"></i>`;
         }
-        // Show text choice below hands (optional)
-        // if (rpsPlayer1ChoiceDisplay) rpsPlayer1ChoiceDisplay.textContent = player1Choice;
-        // if (rpsPlayer2ChoiceDisplay) rpsPlayer2ChoiceDisplay.textContent = player2Choice;
 
-        // 3. Announce winner
+        // 3. Announce winner with personalized message
         let statusMessage = `Player 1: ${player1Choice}, Player 2: ${player2Choice}. `;
-        if (winner === 0) {
+        
+        // Create a personalized message based on player's perspective
+        if (winnerNumber === 0) {
             statusMessage += "It's a tie!";
-        } else if (winner === 1) {
-            statusMessage += "Player 1 wins!";
-        } else if (winner === 2) {
-            statusMessage += "Player 2 wins!";
+        } else if (winnerNumber === myPlayerNumber) {
+            statusMessage += "You won! 🎉";
         } else {
-            statusMessage = "Game ended."; // Fallback
+            statusMessage += "You lost! 😢";
         }
+        
         rpsUpdateStatus(statusMessage);
-
-        // Re-enable choice buttons for a new game (or wait for reset click)
-        // rpsChoiceBtns.forEach(btn => btn.disabled = false);
 
     }, 1500); // Match shake animation duration (0.5s * 3)
 }

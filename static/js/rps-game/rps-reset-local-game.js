@@ -27,4 +27,12 @@ export function rpsResetLocalGame() {
         });
         console.log("RPS: Choice buttons disabled during reset."); // Added log
     }
+    
+    // Clean up any position selection UI
+    const positionContainer = document.getElementById('rpsPositionSelection');
+    if (positionContainer) {
+        // Instead of removing, we'll let the server send new position data
+        // to repopulate this section after reset
+        positionContainer.innerHTML = '';
+    }
 }

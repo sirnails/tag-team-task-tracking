@@ -1,30 +1,50 @@
+import json
 import logging
-from server.server_state import rooms_state, clients, DEFAULT_RPS_STATE
+import server.server_state as server_state
+from server.server_utils import broadcast_to_room
 
-async def server_reset_rps_game(room, notify=True):
-    """Properly reset the RPS game state for the given room."""
-    logging.info(f"Resetting RPS game in room '{room}' with notify={notify}")
+async def server_reset_rps_game(ws, data, room, room_state):
+    """Reset the RPS game."""
+    logging.info(f"Resetting RPS game in room {room}")
     
-    # Get the RPS game state
-    rps = rooms_state[room].setdefault('rps_game', DEFAULT_RPS_STATE.copy())
-    
-    # Create a new clean state
-    rooms_state[room]['rps_game'] = {
-        'player1': None,
-        'player2': None,
+    # Reset the game state with all necessary fields including positions
+    room_state['rps'] = {
+        'players': [],
         'choices': {},
-        'active': False,
-        'player_map': {}
+        'result': None,
+        'player_connections': {},
+        'positions': {1: None, 2: None}  # Reset position assignments with integer keys
     }
     
-    # Notify clients of the reset if requested
-    if notify:
-        for client in clients[room]:
+    # Clean up stale connections
+    active_connections = []
+    for client in server_state.connections[room]:
+        try:
             if not client.closed:
-                try:
-                    await client.send_json({
-                        'type': 'rps_update',
-                        'data': {'event': 'reset'}
-                    })
-                except Exception as e:
-                    logging.error(f"Error sending reset notification: {e}")
+                active_connections.append(client)
+        except:
+            pass
+    
+    # Update connections list with only active connections
+    server_state.connections[room] = active_connections
+    
+    # Broadcast the reset game state to all clients in the room
+    # Send connected client information for position selection
+    client_names = [f"Player-{id(client) % 10000}" for client in active_connections]
+    
+    # Convert positions to string keys for JSON serialization
+    serializable_positions = {'1': None, '2': None}
+    
+    await broadcast_to_room(room, {
+        'type': 'rps_update',
+        'data': {
+            'event': 'reset',
+            'players': [],
+            'choices': {},
+            'result': None,
+            'positions': serializable_positions,
+            'connectedClients': client_names
+        }
+    })
+    
+    logging.info(f"RPS game has been reset in room {room}")

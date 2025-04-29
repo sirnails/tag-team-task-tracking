@@ -27,3 +27,4 @@ server/__pycache__/server_websocket_handler.cpython-312.pyc
 server/__pycache__/server_badge_page_handler.cpython-312.pyc
 server/__pycache__/server_badge_handler.cpython-312.pyc
 server/__pycache__/server_badge_websocket_handler.cpython-312.pyc
+server/__pycache__/server_rps_websocket_handler.cpython-312.pyc

@@ -1,0 +1,98 @@
+{
+  "workflow": {
+    "states": [
+      {
+        "id": "open",
+        "name": "Open",
+        "color": "#3498db",
+        "position": {
+          "x": 318.3406819254517,
+          "y": -1.897274050023242
+        }
+      },
+      {
+        "id": "implementing",
+        "name": "Implementing",
+        "color": "#f39c12"
+      },
+      {
+        "id": "testing",
+        "name": "Testing",
+        "color": "#9b59b6"
+      },
+      {
+        "id": "done",
+        "name": "Done",
+        "color": "#2ecc71"
+      }
+    ],
+    "transitions": [
+      {
+        "from": "open",
+        "to": "implementing"
+      },
+      {
+        "from": "implementing",
+        "to": "testing"
+      },
+      {
+        "from": "testing",
+        "to": "done"
+      },
+      {
+        "from": "testing",
+        "to": "implementing"
+      },
+      {
+        "from": "implementing",
+        "to": "open"
+      }
+    ],
+    "stateIdCounter": 4
+  },
+  "workItems": [
+    {
+      "id": "work-0",
+      "title": "trig",
+      "description": "hello",
+      "stateId": "testing",
+      "created": "2025-04-29T21:39:14.194Z",
+      "journal": [
+        {
+          "text": "State changed from Implementing to Testing",
+          "stateId": "testing",
+          "transition": {
+            "from": "implementing",
+            "to": "testing"
+          },
+          "timestamp": "2025-04-29T21:41:09.465Z"
+        },
+        {
+          "text": "State changed from Open to Implementing",
+          "stateId": "implementing",
+          "transition": {
+            "from": "open",
+            "to": "implementing"
+          },
+          "timestamp": "2025-04-29T21:40:58.609Z"
+        }
+      ]
+    }
+  ],
+  "timer": {
+    "endTime": null,
+    "isRunning": false,
+    "elapsedTime": 0,
+    "totalTime": 1500
+  },
+  "rps": {
+    "players": [],
+    "choices": {},
+    "result": null,
+    "player_connections": {},
+    "positions": {
+      "1": null,
+      "2": null
+    }
+  }
+}

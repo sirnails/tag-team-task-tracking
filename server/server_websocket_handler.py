@@ -7,6 +7,30 @@ from server.server_handle_message import server_handle_message
 from server.server_broadcast_room_list import server_broadcast_room_list
 from server.server_handle_get_rooms import server_handle_get_rooms
 
+# Helper function to create serializable room state
+def create_serializable_state(room_state, room_name):
+    """Creates a JSON-serializable copy of room state, removing any non-serializable objects."""
+    serializable_state = {
+        'type': 'full_update',
+        'data': {
+            'board': room_state.get('board', {}),
+            'timer': room_state.get('timer', {}),
+            'workflow': room_state.get('workflow', {}),
+            'workItems': room_state.get('workItems', []),
+        },
+        'room': room_name,
+        'rooms': list(server_state.rooms_state.keys())
+    }
+    
+    # Handle RPS state carefully to remove WebSocketResponse objects
+    rps_state = room_state.get('rps', {})
+    if rps_state:
+        # Create a clean copy without the player_connections field
+        clean_rps = {k: v for k, v in rps_state.items() if k != 'player_connections'}
+        serializable_state['data']['rps'] = clean_rps
+    
+    return serializable_state
+
 async def server_websocket_handler(request):
     """Handle WebSocket connections."""
     ws = web.WebSocketResponse()
@@ -34,19 +58,7 @@ async def server_websocket_handler(request):
         room_state = server_state.rooms_state[room_name]
         
         # Create a serializable version of the state
-        # Copy only the data we need, excluding any non-serializable objects
-        serializable_state = {
-            'type': 'full_update',
-            'data': {
-                'board': room_state.get('board', {}),
-                'timer': room_state.get('timer', {}),
-                'workflow': room_state.get('workflow', {}),
-                'workItems': room_state.get('workItems', []),
-                'rps': room_state.get('rps', {})
-            },
-            'room': room_name,
-            'rooms': list(server_state.rooms_state.keys())  # Direct list of room names instead of using the function
-        }
+        serializable_state = create_serializable_state(room_state, room_name)
         
         await ws.send_str(json.dumps(serializable_state))
         

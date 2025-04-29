@@ -1,7 +1,8 @@
 import { safeSend } from '../websocket/websocket.js';
 import { 
     initializeRpsElements, rpsGameBtn, closeRpsModalBtn, rpsChoiceBtns, 
-    rpsModal, resetRpsGameBtn, updateRpsGameState
+    rpsModal, resetRpsGameBtn, updateRpsGameState, myPlayerNumber,
+    rpsPlayer1Hand, rpsPlayer2Hand, choiceIcons
 } from './rps-shared-state.js';
 import { rpsOpenModal } from './rps-open-modal.js';
 import { rpsCloseModal } from './rps-close-modal.js';
@@ -37,8 +38,32 @@ export function rpsInitializeGame() {
         rpsChoiceBtns.forEach(button => {
             button.addEventListener('click', rpsHandleChoiceClick);
             button.disabled = true; // Disable initially until game starts
+            
+            // Add hover effects to show preview of choice
+            button.addEventListener('mouseenter', (event) => {
+                const choice = event.currentTarget.dataset.choice;
+                if (!choice) return;
+                
+                // Only update the hand display for the current player
+                const handDisplay = myPlayerNumber === 1 ? rpsPlayer1Hand : rpsPlayer2Hand;
+                if (handDisplay && !handDisplay.classList.contains('shake')) {
+                    // Store original icon to restore on mouseleave
+                    handDisplay.dataset.originalIcon = handDisplay.innerHTML;
+                    // Update to show hovered choice
+                    handDisplay.innerHTML = `<i class="fas ${choiceIcons[choice]}"></i>`;
+                }
+            });
+            
+            button.addEventListener('mouseleave', (event) => {
+                // Restore original icon when mouse leaves
+                const handDisplay = myPlayerNumber === 1 ? rpsPlayer1Hand : rpsPlayer2Hand;
+                if (handDisplay && handDisplay.dataset.originalIcon && !handDisplay.classList.contains('shake')) {
+                    handDisplay.innerHTML = handDisplay.dataset.originalIcon;
+                    delete handDisplay.dataset.originalIcon;
+                }
+            });
         });
-        console.log("RPS: Added click listeners to choice buttons."); // Added log
+        console.log("RPS: Added click and hover listeners to choice buttons."); // Added log
     }
     if (resetRpsGameBtn) {
         resetRpsGameBtn.addEventListener('click', () => {
