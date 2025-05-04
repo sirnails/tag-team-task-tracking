@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Management</title>
+    <link rel="icon" href="../../static/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="../../static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../static/css/styles.css">
+    <!-- Using local Font Awesome CSS -->
+    <link rel="stylesheet" href="../../static/css/all.min.css">
+    <!-- Using local D3.js library - required for the force-directed graph visualization -->
+    <script src="../../static/js/d3/d3.v7.min.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <div class="left-controls">
+                <h1><i class="fas fa-project-diagram"></i> Workflow Management</h1>
+                <div class="connection-status">
+                    <span id="connectionStatus" class="disconnected"><i class="fas fa-circle"></i> Disconnected</span>
+                </div>
+            </div>
+            <div class="right-controls">
+                <div class="room-switcher">
+                    <select id="roomSelect" class="room-select">
+                        <option value="default">Default Room</option>
+                    </select>
+                    <button id="newRoomBtn" class="room-btn"><i class="fas fa-plus"></i></button>
+                    <button id="deleteRoomBtn" class="room-btn delete-room-btn"><i class="fas fa-trash"></i></button>
+                </div>
+                <button id="themeToggle" class="theme-toggle">
+                    <i class="fas fa-sun"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <div id="workflowContent">
+            <div class="workflow-container" id="workflowContainer">
+                <!-- Work Items List View -->
+                <div id="workItemsContainer" class="workflow-section">
+                    <div class="workflow-header">
+                        <h2><i class="fas fa-tasks"></i> Work Items</h2>
+                        <div class="workflow-actions">
+                            <button id="addWorkItemBtn" class="primary-btn"><i class="fas fa-plus"></i> Add Work Item</button>
+                            <button id="manageWorkflowBtn" class="secondary-btn"><i class="fas fa-cog"></i> Configure Workflow</button>
+                        </div>
+                    </div>
+                    <div id="workItemsList" class="work-items-list">
+                        <!-- Work items will be populated here -->
+                        <div class="empty-state">No work items yet. Click "Add Work Item" to create one.</div>
+                    </div>
+                </div>
+
+                <!-- Work Item Detail View (hidden by default) -->
+                <div id="workItemDetail" class="workflow-section" style="display: none;">
+                    <!-- Work item detail will be populated here -->
+                </div>
+
+                <!-- Workflow Configuration View (hidden by default) -->
+                <div id="configContainer" class="workflow-section" style="display: none;">
+                    <!-- Configuration content will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../../static/js/websocket/websocket.js"></script>
+    <script type="module" src="../../static/js/workflow/workflow.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // Connect to WebSocket
+                connectWebSocket();
+                
+                // Initialize workflow with empty data (the module will create default states)
+                initializeWorkflow({});
+                
+                // Initialize theme toggle
+                const themeToggle = document.getElementById('themeToggle');
+                const html = document.documentElement;
+                const icon = themeToggle.querySelector('i');
+
+                function toggleTheme() {
+                    if (html.getAttribute('data-theme') === 'light') {
+                        html.setAttribute('data-theme', 'dark');
+                        icon.className = 'fas fa-sun';
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        html.setAttribute('data-theme', 'light');
+                        icon.className = 'fas fa-moon';
+                        localStorage.setItem('theme', 'light');
+                    }
+                }
+
+                // Initialize theme
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                html.setAttribute('data-theme', savedTheme);
+                icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+
+                themeToggle.addEventListener('click', toggleTheme);
+            } catch (error) {
+                console.error("Error during initialization:", error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -273,7 +273,7 @@ function initUserProfile() {
     const profilePic = document.getElementById('profile-picture');
     if (profilePic) {
         if (currentUser.profilePicture) {
-            profilePic.innerHTML = `<img src="static/images/${currentUser.profilePicture}" alt="${currentUser.name}">`;
+            profilePic.innerHTML = `<img src="/static/images/${currentUser.profilePicture}" alt="${currentUser.name}">`;
         } else {
             // Default profile pic with initials
             const initials = currentUser.name
@@ -385,31 +385,36 @@ function initBadgeManagement() {
 
 // Create a badge card element
 function createBadgeCard(badge, isEarned, dateEarned) {
-    const badgeCard = document.createElement('div');
-    badgeCard.className = 'badge-card';
-    badgeCard.setAttribute('data-badge-id', badge.id);
+    const card = document.createElement('div');
+    card.className = `badge-card ${isEarned ? 'earned' : ''}`;
+    card.dataset.badgeId = badge.id;
     
-    badgeCard.innerHTML = `
-        <div class="badge-header">
-            <div class="badge-icon">
-                ${badge.icon ? `<img src="static/images/${badge.icon}" alt="${badge.name}">` : 
-                    `<i class="fas fa-medal"></i>`}
-            </div>
-            <div class="badge-name">${badge.name}</div>
+    card.innerHTML = `
+        <div class="badge-icon">
+            ${badge.icon ? `<img src="/static/images/${badge.icon}" alt="${badge.name}">` : 
+                `<i class="fas fa-medal"></i>`}
+            ${isEarned ? '<div class="earned-overlay"><i class="fas fa-check"></i></div>' : ''}
         </div>
-        <div class="badge-description">${badge.description}</div>
-        <div class="badge-status">
-            ${isEarned ? 
-                `<div class="badge-earned"><i class="fas fa-check-circle"></i> Earned</div>
-                <div class="badge-date">${formatDate(dateEarned)}</div>` : 
-                `<div class="badge-not-earned"><i class="fas fa-circle"></i> Not Earned</div>`}
+        <div class="badge-info">
+            <h3>${badge.name}</h3>
+            <p class="badge-status">
+                ${isEarned ? `Earned: ${formatDate(dateEarned)}` : 'Not yet earned'}
+            </p>
+            ${!isEarned && badge.progress ? 
+                `<div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${badge.progress}%"></div>
+                    </div>
+                    <div class="progress-text">${badge.progress}%</div>
+                </div>` : ''}
         </div>
     `;
     
-    // View badge details on click
-    badgeCard.addEventListener('click', () => showBadgeDetails(badge, isEarned, dateEarned));
+    card.addEventListener('click', () => {
+        showBadgeDetails(badge, isEarned, dateEarned);
+    });
     
-    return badgeCard;
+    return card;
 }
 
 // Initialize activity feed
@@ -551,52 +556,75 @@ function initAdminSection() {
 
 // Show badge details modal
 function showBadgeDetails(badge, isEarned, dateEarned) {
-    const modal = document.getElementById('badge-detail-modal');
-    if (!modal) return;
+    modalTitle.textContent = badge.name;
     
-    const content = modal.querySelector('.badge-detail-content');
-    const nominateBtn = document.getElementById('nominate-button');
-    
-    content.innerHTML = `
-        <div class="badge-header">
-            <div class="badge-icon">
-                ${badge.icon ? `<img src="static/images/${badge.icon}" alt="${badge.name}">` : 
+    let detailsHTML = `
+        <div class="badge-detail-container">
+            <div class="badge-detail-icon">
+                ${badge.icon ? `<img src="/static/images/${badge.icon}" alt="${badge.name}">` : 
                     `<i class="fas fa-medal"></i>`}
+                ${isEarned ? '<div class="earned-overlay"><i class="fas fa-check"></i></div>' : ''}
             </div>
-            <div>
-                <h3 class="badge-name">${badge.name}</h3>
-                <div class="badge-category">${badge.category}</div>
+            <div class="badge-detail-info">
+                <p class="badge-description">${badge.description || 'No description available.'}</p>
+                <p class="badge-criteria"><strong>Criteria:</strong> ${badge.criteria || 'Complete specific actions to earn this badge.'}</p>
+                <p class="badge-status">
+                    <strong>Status:</strong> ${isEarned ? `Earned on ${formatDate(dateEarned)}` : 'Not yet earned'}
+                </p>
+                ${!isEarned && badge.progress ? 
+                    `<div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${badge.progress}%"></div>
+                        </div>
+                        <div class="progress-text">${badge.progress}% Complete</div>
+                    </div>` : ''}
             </div>
-        </div>
-        <div class="badge-info">
-            <h4>Description:</h4>
-            <p>${badge.description}</p>
-            <h4>Requirements:</h4>
-            <p>${badge.requirements}</p>
-            ${isEarned ? `
-                <div class="badge-earned-info">
-                    <h4>Earned On:</h4>
-                    <p>${formatDate(dateEarned)}</p>
-                    <h4>Awarded By:</h4>
-                    <p>${getBadgeAwarderName(badge.id)}</p>
-                </div>
-            ` : ''}
         </div>
     `;
     
-    // Set up nominate button
-    if (nominateBtn) {
-        nominateBtn.setAttribute('data-badge-id', badge.id);
-        
-        // Set up nomination button click
-        nominateBtn.onclick = () => {
-            showNominationModal(badge);
-            modal.style.display = 'none';
-        };
+    if (badge.rewards && badge.rewards.length > 0) {
+        detailsHTML += `
+            <div class="badge-rewards">
+                <h4>Rewards:</h4>
+                <ul>
+                    ${badge.rewards.map(reward => `<li>${reward}</li>`).join('')}
+                </ul>
+            </div>
+        `;
     }
     
-    // Show the modal
-    modal.style.display = 'flex';
+    if (isEarned) {
+        detailsHTML += `
+            <div class="achievement-sharing">
+                <button id="share-badge" class="btn btn-primary">
+                    <i class="fas fa-share-alt"></i> Share Achievement
+                </button>
+            </div>
+        `;
+    } else if (badge.hints && badge.hints.length > 0) {
+        detailsHTML += `
+            <div class="badge-hints">
+                <h4>Hints:</h4>
+                <ul>
+                    ${badge.hints.map(hint => `<li>${hint}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    modalBody.innerHTML = detailsHTML;
+    
+    // Set up share button functionality if the badge is earned
+    if (isEarned) {
+        const shareButton = document.getElementById('share-badge');
+        if (shareButton) {
+            shareButton.addEventListener('click', () => {
+                shareAchievement(badge);
+            });
+        }
+    }
+    
+    badgeModal.style.display = 'block';
 }
 
 // Show badge form modal (for add or edit)

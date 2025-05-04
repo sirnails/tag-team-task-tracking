@@ -1,17 +1,19 @@
 # Create a default room state structure - refactored to avoid duplication
 def server_create_default_room_state():
+    """Create a fresh default state for a new room."""
     return {
-        'todo': [],
-        'inProgress': [],
-        'done': [],
-        'taskIdCounter': 0,
+        'board': {
+            'todo': [],
+            'inProgress': [],
+            'done': [],
+            'taskIdCounter': 0
+        },
         'timer': {
             'endTime': None,
             'isRunning': False,
             'elapsedTime': 0,
             'totalTime': 25 * 60  # 25 minutes in seconds
         },
-        'currentTask': None,
         'workflow': {
             'states': [
                 {'id': 'open', 'name': 'Open', 'color': '#3498db'},

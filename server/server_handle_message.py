@@ -25,9 +25,9 @@ async def server_handle_message(ws, msg, room, room_state):
     elif message_type == 'update':
         await server_handle_board_update(ws, msg, room, room_state)
     
-    # Timer updates
+    # Timer updates - NOTE: Fixed parameter count to match function signature
     elif message_type == 'timer':
-        await server_handle_timer_update(ws, msg, room, room_state)
+        await server_handle_timer_update(ws, msg, room)
     
     # Room deletion request
     elif message_type == 'delete_room_request':

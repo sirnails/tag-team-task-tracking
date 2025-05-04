@@ -1,0 +1,524 @@
+/* Badge System Specific Styles - Extends main application styling */
+
+/* Button styles to ensure consistency with main app */
+.primary-btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.primary-btn:hover {
+    background-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.secondary-btn {
+    background-color: var(--component-bg);
+    color: var(--text-color);
+    border: 1px solid var(--gray);
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.secondary-btn:hover {
+    background-color: rgba(173, 181, 189, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Content section styling */
+.content-section {
+    background: var(--component-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Section visibility control */
+.section {
+    margin-bottom: 2rem;
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+.badge-nav-tabs {
+    margin-bottom: 2rem;
+}
+
+/* User Profile Styles */
+.profile-header {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+.profile-picture-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.profile-picture {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: white;
+    font-size: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.badge-count {
+    background: var(--input-bg);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Progress bar styles */
+.progress-container {
+    width: 100%;
+    height: 10px;
+    background-color: var(--input-bg);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary);
+    transition: width 0.3s ease;
+}
+
+/* Badge Grid Styles */
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.badge-card {
+    background: var(--component-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    border-left: 4px solid var(--primary);
+}
+
+.badge-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.badge-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(108, 92, 231, 0.1), transparent);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.badge-card:hover::after {
+    opacity: 1;
+}
+
+.badge-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.badge-card h3 {
+    margin: 0 0 0.75rem 0;
+    color: var(--primary);
+}
+
+.badge-card p {
+    margin: 0;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+/* Search & Filter */
+.search-filter {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.search-bar {
+    flex: 1;
+    display: flex;
+    min-width: 250px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+    font-size: 0.9rem;
+    background: var(--input-bg);
+    color: var(--input-text);
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
+.search-bar button {
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+/* Admin Tabs */
+.admin-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+}
+
+.tab:hover {
+    background: rgba(108, 92, 231, 0.1);
+}
+
+.tab.active {
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Badge and Category Lists */
+.badge-list, .category-list {
+    margin-top: 1.5rem;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+    transition: var(--transition);
+    background: var(--input-bg);
+    margin-bottom: 0.75rem;
+    border-radius: var(--border-radius);
+}
+
+.list-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.list-item-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Activity Feed */
+.activity-feed {
+    max-height: 500px;
+    overflow-y: auto;
+    margin-top: 1.5rem;
+}
+
+.activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: var(--transition);
+}
+
+.activity-item:hover {
+    background: rgba(108, 92, 231, 0.05);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 0.5rem;
+}
+
+/* Badge Detail Modal */
+.badge-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.badge-detail-header {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.badge-detail-info {
+    flex: 1;
+}
+
+.badge-requirements {
+    background: var(--input-bg);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+.nomination-badge-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--component-bg);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: var(--shadow);
+}
+
+.close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--text-color);
+}
+
+.modal-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.modal-footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(173, 181, 189, 0.2);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Form styles */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(173, 181, 189, 0.5);
+    border-radius: var(--border-radius);
+    background: var(--input-bg);
+    color: var(--input-text);
+    font-family: 'Poppins', sans-serif;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
+/* Hidden utility */
+.hidden {
+    display: none !important;
+}
+
+/* Login Form */
+.login-form {
+    margin: 2rem 0;
+}
+
+.user-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.user-item {
+    background: var(--input-bg);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 3px solid var(--primary);
+}
+
+.user-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+}
+
+/* Nav Link */
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    background: rgba(108, 92, 231, 0.1);
+    color: var(--primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .search-filter {
+        flex-direction: column;
+    }
+    
+    .badge-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    
+    .badge-detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+}

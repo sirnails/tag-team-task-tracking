@@ -23,12 +23,18 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
     // Update total time if provided and valid
     if (timerState.totalTime) {
         const newTotalTime = safeNumberConversion(timerState.totalTime, DEFAULT_TOTAL_TIME);
+        console.log(`Setting total time to ${newTotalTime} seconds`);
         setTotalTime(newTotalTime);
     }
     
     // Update running state
     const wasRunning = isRunning;
     const newIsRunning = !!timerState.isRunning;
+    
+    // Log more details for debugging
+    console.log(`Timer state transition: ${wasRunning ? 'running' : 'stopped'} -> ${newIsRunning ? 'running' : 'stopped'}`);
+    console.log(`Timer data - isRunning: ${newIsRunning}, endTime: ${timerState.endTime}, elapsedTime: ${timerState.elapsedTime}, totalTime: ${totalTime}`);
+    
     setIsRunning(newIsRunning);
     
     // Update button to match state
@@ -53,6 +59,30 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
                 // Calculate current time left based on end time
                 const now = Date.now() / 1000;
                 const timeLeft = Math.max(0, Math.round(serverEndTime - now));
+                
+                // Check if timer has actually expired but server state hasn't been updated yet
+                if (timeLeft <= 0) {
+                    console.log('Timer has already expired according to server end time');
+                    
+                    // Stop the timer and reset to stopped state
+                    setIsRunning(false);
+                    stopPomodoroTimerUpdates();
+                    updatePomodoroTimer(totalTime, totalTime);
+                    updatePomodoroProgress(0, totalTime, DEFAULT_TOTAL_TIME);
+                    pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
+                    
+                    // Notify server that timer has completed
+                    sendTimerUpdate({
+                        isRunning: false,
+                        elapsedTime: totalTime,
+                        endTime: null
+                    }, true);
+                    
+                    // Show completion effects
+                    handlePomodoroCompletion();
+                    return;
+                }
+                
                 const elapsedTime = Math.min(totalTime, totalTime - timeLeft);
                 
                 // Update display
@@ -60,9 +90,9 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
                 updatePomodoroProgress(elapsedTime, totalTime, DEFAULT_TOTAL_TIME);
                 
                 // Start client-side timer updates if not already running
-                if (!wasRunning) {
-                    startPomodoroTimerUpdates(newIsRunning, serverEndTime, totalTime, DEFAULT_TOTAL_TIME, setIsRunning, setEndTime);
-                }
+                stopPomodoroTimerUpdates(); // First stop any existing timer to avoid duplicates
+                console.log(`Starting timer updates with remaining time: ${timeLeft}s`);
+                startPomodoroTimerUpdates(newIsRunning, serverEndTime, totalTime, DEFAULT_TOTAL_TIME, setIsRunning, setEndTime);
             } else {
                 console.error('Invalid endTime from server:', timerState.endTime);
                 // If server sent an invalid end time, create a new one and broadcast it
@@ -80,6 +110,7 @@ export function updatePomodoroTimerState(timerState, DEFAULT_TOTAL_TIME, isRunni
             console.warn('No endTime but timer running, creating one');
             const newEndTime = (Date.now() / 1000) + totalTime;
             setEndTime(newEndTime);
+            
             sendTimerUpdate({
                 isRunning: true,
                 totalTime: totalTime,

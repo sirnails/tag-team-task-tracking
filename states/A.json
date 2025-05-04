@@ -48,47 +48,22 @@
   },
   "workItems": [],
   "board": {
-    "todo": [
-      {
-        "id": "task-0",
-        "text": "asdf",
-        "details": ""
-      },
-      {
-        "id": "task-2",
-        "text": "asdf",
-        "details": "dave"
-      },
-      {
-        "id": "task-3",
-        "text": "asdf",
-        "details": ""
-      }
-    ],
-    "inProgress": [
-      {
-        "id": "task-4",
-        "text": "asdf",
-        "details": ""
-      }
-    ],
-    "done": [
-      {
-        "id": "task-1",
-        "text": "asdfasdf",
-        "details": ""
-      }
-    ],
-    "taskIdCounter": 5,
-    "currentTask": {
-      "id": "task-4",
-      "text": "asdf"
-    }
+    "todo": [],
+    "inProgress": [],
+    "done": [],
+    "taskIdCounter": 0
   },
   "timer": {
     "endTime": null,
     "isRunning": false,
     "elapsedTime": 0,
     "totalTime": 1500
+  },
+  "rps_game": {
+    "player1": null,
+    "player2": null,
+    "choices": {},
+    "active": false,
+    "player_map": {}
   }
 }

@@ -1,0 +1,880 @@
+:root {
+    /* Light mode variables */
+    --primary: #6c5ce7;
+    --primary-light: #a29bfe;
+    --secondary: #00b894;
+    --danger: #ff7675;
+    --danger-pastel: #b33636;
+    --warning: #fdcb6e;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --gray: #adb5bd;
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    --component-bg: white;
+    --text-color: var(--dark);
+    --input-bg: white;
+    --input-text: var(--dark);
+    --border-radius: 12px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.1);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+[data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #1a1c20 0%, #2d3436 100%);
+    --component-bg: #2d3436;
+    --text-color: #f8f9fa;
+    --input-bg: #1a1c20;
+    --input-text: #f8f9fa;
+    --shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    color: var(--text-color);
+    line-height: 1.6;
+    padding-top: 4rem; /* Space for fixed header */
+}
+
+/* Header & Navigation Styles */
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--component-bg);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    padding: 0.4rem 0;
+    backdrop-filter: blur(10px);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.left-controls, .right-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.left-controls {
+    flex: 1;
+}
+
+h1 {
+    font-size: 1.5rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--gray);
+    margin-left: 0.5rem;
+    height: 1.6rem;
+}
+
+.connection-status i {
+    margin-right: 0.25rem;
+}
+
+.connected {
+    color: var(--secondary);
+}
+
+.disconnected {
+    color: var(--danger);
+}
+
+.room-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.room-select {
+    background: var(--component-bg);
+    color: var(--text-color);
+    border: 1px solid var(--primary-light);
+    border-radius: var(--border-radius);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    height: 1.9rem;
+}
+
+.room-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    flex: 0 0 auto;
+}
+
+.room-btn:hover {
+    background: var(--primary-light);
+    transform: scale(1.1);
+}
+
+.delete-room-btn {
+    background: var(--danger) !important;
+    color: white;
+    margin-left: 0.5rem;
+}
+
+.delete-room-btn:hover {
+    background: var(--danger-pastel) !important;
+    transform: scale(1.1);
+}
+
+.theme-toggle {
+    background: var(--component-bg);
+    color: var(--primary);
+    border: 1px solid var(--primary-light);
+    border-radius: 50%;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    flex: 0 0 auto;
+}
+
+.app-container {
+    margin: 1rem auto;
+    padding: 0 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Workflow Specific Styles */
+.workflow-container {
+    background: var(--component-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    min-height: 600px;
+}
+
+.workflow-section {
+    width: 100%;
+}
+
+.workflow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.workflow-header h2 {
+    margin: 0;
+    color: var(--primary);
+}
+
+.workflow-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.primary-btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.primary-btn:hover {
+    background-color: #5649c0;
+    transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background-color: var(--component-bg);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 50px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.secondary-btn:hover {
+    background-color: rgba(108, 92, 231, 0.1);
+    transform: translateY(-2px);
+}
+
+.work-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.work-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 4px solid var(--primary);
+}
+
+.work-item-row:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.work-item-title {
+    font-weight: 500;
+    flex: 1;
+}
+
+.work-item-state {
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--gray);
+    padding: 2rem 0;
+    font-style: italic;
+}
+
+/* Work Item Detail Styles */
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-header h2 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 1.75rem;
+}
+
+.workflow-status {
+    margin-bottom: 1.5rem;
+}
+
+.workflow-status h3 {
+    font-weight: 500;
+}
+
+.workflow-visualization {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.workflow-diagram {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 1rem 0;
+}
+
+.workflow-diagram::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gray);
+    z-index: 1;
+}
+
+.workflow-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 2;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    border: 2px solid transparent;
+    transition: var(--transition);
+}
+
+.workflow-state.current-state {
+    background: rgba(108, 92, 231, 0.1);
+    transform: scale(1.05);
+    border-color: inherit;
+}
+
+.state-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.state-name {
+    font-size: 0.85rem;
+    text-align: center;
+    color: var(--text-color);
+}
+
+.work-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.detail-section {
+    padding: 1.5rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.detail-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+    color: var(--primary);
+}
+
+.description-text {
+    white-space: pre-wrap;
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.state-transition-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 50px;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.state-transition-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.journal-entries {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.journal-entry {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.journal-timestamp {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-bottom: 0.25rem;
+}
+
+.journal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.journal-form textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius);
+    background: var(--component-bg);
+    color: var(--text-color);
+    resize: vertical;
+}
+
+.journal-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.journal-form button {
+    align-self: flex-end;
+}
+
+.empty-journal {
+    color: var(--gray);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Workflow Configuration Styles */
+.config-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.config-header h2 {
+    margin: 0;
+    color: var(--primary);
+}
+
+.config-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.config-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.config-table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.config-table-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.5fr;
+    padding: 0.75rem 1rem;
+    background: rgba(108, 92, 231, 0.1);
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.5fr;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(173, 181, 189, 0.2);
+}
+
+.config-row:last-child {
+    border-bottom: none;
+}
+
+.config-cell {
+    display: flex;
+    align-items: center;
+}
+
+.color-sample {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0.25rem;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.icon-btn:hover {
+    background: rgba(108, 92, 231, 0.1);
+    transform: scale(1.1);
+}
+
+.delete-state-btn, .delete-transition-btn {
+    color: var(--danger);
+}
+
+.delete-state-btn:hover, .delete-transition-btn:hover {
+    background: rgba(255, 118, 117, 0.1);
+}
+
+/* Form Styles for Modals */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea,
+.form-group input[type="color"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.form-group input[type="color"] {
+    height: 40px;
+    padding: 0.25rem;
+}
+
+.form-group select {
+    cursor: pointer;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    pointer-events: all;
+}
+
+.modal.show {
+    display: block;
+}
+
+.modal-content {
+    background: var(--component-bg);
+    margin: 15% auto;
+    padding: 1.5rem 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    color: var(--text-color);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 0.25rem 0 1rem;
+    height: 2.5rem;
+}
+
+.modal-header h3 {
+    color: var(--primary);
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.close-modal {
+    position: absolute;
+    right: 1.25rem;
+    top: 1.25rem;
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: var(--gray);
+    cursor: pointer;
+    padding: 0.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.close-modal:hover {
+    background: rgba(0,0,0,0.1);
+    color: var(--danger);
+    transform: scale(1.1);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.cancel-btn {
+    background-color: var(--gray);
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #95a5a6;
+    transform: translateY(-2px);
+}
+
+/* D3.js Force-Directed Workflow Graph Styles */
+.workflow-graph-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    background: var(--input-bg);
+    border-radius: var(--border-radius);
+}
+
+.workflow-graph {
+    width: 100%;
+    background-color: transparent;
+    border-radius: var(--border-radius);
+}
+
+.workflow-link {
+    stroke-width: 2px;
+    stroke-opacity: 0.4;
+    transition: stroke-width 0.3s ease, stroke-opacity 0.3s ease;
+}
+
+.workflow-link.valid-transition {
+    stroke-opacity: 0.8;
+    stroke-width: 3px;
+}
+
+.workflow-link:hover {
+    stroke-opacity: 1;
+    stroke-width: 4px;
+}
+
+.workflow-link {
+    stroke-width: 2px;
+    stroke-opacity: 0.6;
+    transition: stroke-width 0.3s ease, stroke-opacity 0.3s ease;
+}
+
+.node {
+    cursor: move;
+}
+
+.node text {
+    font-size: 12px;
+    font-weight: 500;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.node circle {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+    transition: filter 0.3s ease;
+}
+
+.node:hover circle {
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3));
+}
+
+.node.current-node circle {
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+
+/* Pulse animation for the current state */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+    }
+    50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
+    }
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+    }
+}
+
+.node circle.pulse {
+    animation: pulse 2s infinite ease-in-out;
+}
+
+/* Responsive design for the graph */
+@media (max-width: 768px) {
+    .workflow-graph {
+        height: 250px;
+    }
+    
+    .node text {
+        font-size: 10px;
+    }
+}
+
+/* Workflow controls for zoom and reset */
+.workflow-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.workflow-btn {
+    background-color: var(--component-bg);
+    color: var(--primary);
+    border: 1px solid var(--primary-light);
+    border-radius: 50px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.workflow-btn:hover {
+    background-color: rgba(108, 92, 231, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.workflow-btn i {
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .workflow-actions {
+        flex-direction: column;
+    }
+    
+    .workflow-diagram {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .workflow-diagram::before {
+        width: 2px;
+        height: 100%;
+        top: 0;
+        left: 50%;
+        right: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .config-table-header,
+    .config-row {
+        grid-template-columns: 1fr 0.5fr 0.5fr;
+    }
+    
+    .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .state-transition-btn {
+        width: 100%;
+    }
+    
+    .workflow-controls {
+        top: 5px;
+        right: 5px;
+    }
+    
+    .workflow-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+    }
+}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban & Pomodoro</title>
+    <link rel="icon" href="../../static/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="../../static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../static/css/styles.css">
+    <!-- Using local Font Awesome CSS -->
+    <link rel="stylesheet" href="../../static/css/all.min.css">
+</head>
+<body>
+    <!-- Task Edit Modal -->
+    <div id="taskEditModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="modal-header">
+                <h3>Edit Task</h3>
+            </div>
+            <input type="text" id="taskNameInput" placeholder="Task name..." />
+            <textarea id="taskDetailInput" placeholder="Enter task details..."></textarea>
+            <div class="modal-footer">
+                <button id="cancelTaskDetails" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+                <button id="saveTaskDetails" class="timer-btn"><i class="fas fa-save"></i> Save</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div class="header-content">
+            <div class="left-controls">
+                <h1><i class="fas fa-tasks"></i> Kanban & Pomodoro</h1>
+                <div class="connection-status">
+                    <span id="connectionStatus" class="disconnected"><i class="fas fa-circle"></i> Disconnected</span>
+                </div>
+                <a href="/" class="primary-btn"><i class="fas fa-home"></i> Main Menu</a>
+            </div>
+            <div class="right-controls">
+                <div class="room-switcher">
+                    <select id="roomSelect" class="room-select">
+                        <option value="default">Default Room</option>
+                    </select>
+                    <button id="newRoomBtn" class="room-btn"><i class="fas fa-plus"></i></button>
+                    <button id="deleteRoomBtn" class="room-btn delete-room-btn"><i class="fas fa-trash"></i></button>
+                </div>
+                <button id="themeToggle" class="theme-toggle">
+                    <i class="fas fa-sun"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <div id="kanbanContent">
+            <div class="top-section">
+                <div class="input-section">
+                    <div class="input-title"><i class="fas fa-list"></i> Task Input</div>
+                    <textarea id="taskInput" placeholder="Enter your tasks here, one per line..."></textarea>
+                    <div class="button-group">
+                        <button id="loadTasks"><i class="fas fa-plus-circle"></i> Load Tasks</button>
+                        <button id="clearStorage" class="danger"><i class="fas fa-trash-alt"></i> Clear All</button>
+                    </div>
+                    
+                    <!-- Trash column positioned inside input section -->
+                    <div class="trash-column column" id="trashColumn">
+                        <h2><i class="fas fa-trash-alt"></i> Delete</h2>
+                        <div id="trashTasks" class="tasks">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pomodoro-section">
+                    <div class="current-task" id="currentTaskDisplay"><i class="fas fa-clock"></i> No task selected</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+                    </div>
+                    <div class="pomodoro-timer" id="timer">25:00</div>
+                    <div class="pomodoro-controls">
+                        <button id="pomodoroToggle" class="timer-btn"><i class="fas fa-play"></i> Start</button>
+                    </div>
+                </div>
+            </div>
+
+            <main class="main-content">
+                <div class="kanban-board">
+                    <div class="column" id="todoColumn">
+                        <h2><i class="fas fa-clipboard-list"></i> Todo</h2>
+                        <div id="todoTasks" class="tasks">
+                            <div class="empty-state">Add tasks to get started</div>
+                        </div>
+                    </div>
+                    
+                    <div class="column" id="inProgressColumn">
+                        <h2><i class="fas fa-spinner"></i> In Progress</h2>
+                        <div id="inProgressTasks" class="tasks">
+                            <div class="empty-state">Drag a task here</div>
+                        </div>
+                    </div>
+                    
+                    <div class="column" id="doneColumn">
+                        <h2><i class="fas fa-check-circle"></i> Done</h2>
+                        <div id="doneTasks" class="tasks">
+                            <div class="empty-state">Completed tasks</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module">
+        // Use absolute paths from the server root
+        import { connectWebSocket } from '/components/kanban_pomodoro/static/js/websocket/websocket.js';
+        import { initializeBoard } from '/components/kanban_pomodoro/static/js/kanban/kanban.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // Connect to WebSocket
+                connectWebSocket();
+                
+                // Initialize theme toggle
+                const themeToggle = document.getElementById('themeToggle');
+                const html = document.documentElement;
+                const icon = themeToggle.querySelector('i');
+
+                function toggleTheme() {
+                    if (html.getAttribute('data-theme') === 'light') {
+                        html.setAttribute('data-theme', 'dark');
+                        icon.className = 'fas fa-sun';
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        html.setAttribute('data-theme', 'light');
+                        icon.className = 'fas fa-moon';
+                        localStorage.setItem('theme', 'light');
+                    }
+                }
+
+                // Initialize theme
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                html.setAttribute('data-theme', savedTheme);
+                icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+
+                themeToggle.addEventListener('click', toggleTheme);
+            } catch (error) {
+                console.error("Error during initialization:", error);
+            }
+        });
+    </script>
+</body>
+</html>

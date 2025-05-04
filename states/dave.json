@@ -51,38 +51,27 @@
     "todo": [
       {
         "id": "task-0",
-        "text": "asdf",
+        "text": "one",
         "details": ""
       },
       {
         "id": "task-2",
-        "text": "asdf",
-        "details": "dave"
-      },
-      {
-        "id": "task-3",
-        "text": "asdf",
+        "text": "three",
         "details": ""
       }
     ],
     "inProgress": [
       {
-        "id": "task-4",
-        "text": "asdf",
-        "details": ""
-      }
-    ],
-    "done": [
-      {
         "id": "task-1",
-        "text": "asdfasdf",
-        "details": ""
+        "text": "two",
+        "details": "some words to describe"
       }
     ],
-    "taskIdCounter": 5,
+    "done": [],
+    "taskIdCounter": 3,
     "currentTask": {
-      "id": "task-4",
-      "text": "asdf"
+      "id": "task-1",
+      "text": "two"
     }
   },
   "timer": {

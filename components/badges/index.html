@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badge Collection System</title>
+    <!-- Include main application CSS first -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Then include badge-specific styles (modified to extend rather than override) -->
+    <link rel="stylesheet" href="/static/css/badge_styles.css">
+    <link rel="stylesheet" href="/static/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <div class="left-controls">
+                <h1><i class="fas fa-medal"></i> Badge Collection System</h1>
+            </div>
+            <div class="right-controls">
+                <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Back to Main App</a>
+                <button id="themeToggle" class="theme-toggle">
+                    <i class="fas fa-sun"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- Login Section -->
+        <div id="login-section" class="hidden">
+            <div class="content-section">
+                <h2>Please log in to continue</h2>
+                <div class="login-form">
+                    <div class="form-group">
+                        <input type="text" id="username-input" placeholder="Enter your name">
+                    </div>
+                    <button id="login-button" class="primary-btn">Login</button>
+                </div>
+                <div class="user-list-container">
+                    <h3>Or select an existing user:</h3>
+                    <div id="user-list" class="user-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App Container -->
+        <div id="app-container" class="">
+            <!-- Navigation -->
+            <div class="center-controls">
+                <div class="nav-tabs badge-nav-tabs">
+                    <button class="nav-tab active" data-target="profile-section">My Profile</button>
+                    <button class="nav-tab" data-target="badge-section">Badge Management</button>
+                    <button class="nav-tab" data-target="activity-section">Activity Feed</button>
+                    <button class="nav-tab" data-target="admin-section">Admin</button>
+                    <button class="nav-tab logout-button">Logout</button>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile-section" class="section active content-section">
+                <h2>My Profile</h2>
+                <div class="profile-header">
+                    <div class="profile-picture-container">
+                        <div id="profile-picture" class="profile-picture"></div>
+                        <div id="badge-count" class="badge-count">
+                            <span>0</span>/<span>0</span> badges earned
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="user-name"></h3>
+                        <div id="user-role">Role: <span></span></div>
+                        <p>Your badge progress:</p>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <h3>My Badges</h3>
+                <div id="user-badges" class="badge-grid"></div>
+            </div>
+
+            <!-- Badge Management Section -->
+            <div id="badge-section" class="section content-section">
+                <h2>Badge Management</h2>
+                <div class="search-filter">
+                    <div class="search-bar">
+                        <input type="text" id="badge-search" placeholder="Search badges...">
+                        <button id="search-button" class="primary-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="filters">
+                        <select id="category-filter" class="room-select">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="categories-container">
+                    <!-- Categories and badges will be added here dynamically -->
+                </div>
+            </div>
+
+            <!-- Activity Feed Section -->
+            <div id="activity-section" class="section content-section">
+                <h2>Activity Feed</h2>
+                <div id="activity-feed" class="activity-feed">
+                    <!-- Activity items will be added here dynamically -->
+                </div>
+            </div>
+
+            <!-- Admin Section -->
+            <div id="admin-section" class="section content-section">
+                <h2>Admin Panel</h2>
+                <div class="admin-tabs">
+                    <div class="tab active" data-tab="badge-tab">Badges</div>
+                    <div class="tab" data-tab="category-tab">Categories</div>
+                </div>
+                <div class="tab-content active" id="badge-tab">
+                    <button id="add-badge" class="primary-btn"><i class="fas fa-plus"></i> Add New Badge</button>
+                    <div class="badge-list">
+                        <!-- Badge list items will be added here dynamically -->
+                    </div>
+                </div>
+                <div class="tab-content" id="category-tab">
+                    <button id="add-category" class="primary-btn"><i class="fas fa-plus"></i> Add New Category</button>
+                    <div class="category-list">
+                        <!-- Category list items will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Badge Detail Modal -->
+    <div id="badge-detail-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="modal-header">
+                <h3>Badge Details</h3>
+            </div>
+            <div class="badge-detail-content"></div>
+            <div class="modal-footer">
+                <button id="nominate-button" class="primary-btn"><i class="fas fa-award"></i> Nominate Someone</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badge Form Modal -->
+    <div id="badge-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="modal-header">
+                <h3 id="modal-title">Add New Badge</h3>
+            </div>
+            <form id="badge-form">
+                <div class="form-group">
+                    <label for="badge-name">Badge Name</label>
+                    <input type="text" id="badge-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="badge-icon">Icon (path to image)</label>
+                    <input type="text" id="badge-icon">
+                </div>
+                <div class="form-group">
+                    <label for="badge-description">Description</label>
+                    <textarea id="badge-description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="badge-requirements">Requirements</label>
+                    <textarea id="badge-requirements" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="badge-category">Category</label>
+                    <select id="badge-category" class="room-select" required></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="primary-btn"><i class="fas fa-save"></i> Save Badge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Form Modal -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="modal-header">
+                <h3 id="category-modal-title">Add New Category</h3>
+            </div>
+            <form id="category-form">
+                <div class="form-group">
+                    <label for="category-name">Category Name</label>
+                    <input type="text" id="category-name" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="primary-btn"><i class="fas fa-save"></i> Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nomination Modal -->
+    <div id="nomination-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="modal-header">
+                <h3>Nominate for Badge</h3>
+            </div>
+            <div id="nomination-badge" class="nomination-badge-display"></div>
+            <form id="nomination-form">
+                <div class="form-group">
+                    <label for="nominee">Select User</label>
+                    <select id="nominee" class="room-select" required></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="primary-btn"><i class="fas fa-award"></i> Award Badge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="/components/badges/static/js/badges/badge_system.js"></script>
+    <script type="module">
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const html = document.documentElement;
+            const icon = themeToggle.querySelector('i');
+            
+            function toggleTheme() {
+                if (html.getAttribute('data-theme') === 'light') {
+                    html.setAttribute('data-theme', 'dark');
+                    icon.className = 'fas fa-sun';
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    html.setAttribute('data-theme', 'light');
+                    icon.className = 'fas fa-moon';
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+
+            // Initialize theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            html.setAttribute('data-theme', savedTheme);
+            icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Update navigation tabs
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => {
+                if (tab.classList.contains('logout-button')) return;
+                
+                tab.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    
+                    // Update active tab
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show the correct section
+                    document.querySelectorAll('.section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    document.getElementById(targetId).classList.add('active');
+                });
+            });
+            
+            // Handle admin tab switching
+            const adminTabs = document.querySelectorAll('.tab');
+            adminTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    adminTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show the correct content
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

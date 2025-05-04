@@ -27,6 +27,11 @@ export function startPomodoroTimerUpdates(isRunning, endTime, totalTime, DEFAULT
             updatePomodoroTimer(timeLeft, totalTime);
             updatePomodoroProgress(elapsedTime, totalTime, DEFAULT_TOTAL_TIME);
             
+            // For debugging, periodically log time remaining
+            if (timeLeft % 5 === 0) {
+                console.log(`Timer update: ${timeLeft}s remaining`);
+            }
+            
             // If timer completes during this client-side update
             if (timeLeft === 0) {
                 console.log('Timer completed');

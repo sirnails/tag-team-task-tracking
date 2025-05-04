@@ -5,7 +5,6 @@ import { wsUpdateRoomSelect, currentRoomId } from './wsUpdateRoomSelect.js';
 import { wsSwitchRoom } from './wsSwitchRoom.js';
 import { wsSetupSocket } from './wsSetupSocket.js';
 import { wsRequestRoomDeletion } from './wsRequestRoomDeletion.js';
-import { wsHandleRoomDeletionRequest } from './wsHandleRoomDeletionRequest.js';
 import { wsSendUpdate } from './wsSendUpdate.js';
 import { wsSendTimerUpdate } from './wsSendTimerUpdate.js';
 

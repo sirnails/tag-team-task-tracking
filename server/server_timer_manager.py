@@ -48,8 +48,10 @@ class ServerTimerManager:
     @staticmethod
     def handle_timer_update(timer_state, new_state, room=None):
         save_needed = False
+        stop_all_rooms = False  # Default: don't stop timers in other rooms
         
         if 'isRunning' in new_state:
+            # Check if this is a room-specific timer update
             timer_state['isRunning'] = new_state['isRunning']
             
             if new_state['isRunning']:
@@ -70,11 +72,12 @@ class ServerTimerManager:
                     logging.info(f"Timer started in room {room} - end time: {end_time}")
                 save_needed = True
             else:
+                # When stopping a timer, only affect the current room
                 timer_state['endTime'] = None
                 timer_state['elapsedTime'] = 0
                 
                 if room:
-                    logging.info(f"Timer stopped in room {room}")
+                    logging.info(f"Timer stopped in room {room} (room-specific stop)")
                 save_needed = True
         
         if 'endTime' in new_state:

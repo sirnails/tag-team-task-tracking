@@ -2,73 +2,20 @@
   "users": [
     {
       "id": "user1",
-      "name": "John Doe",
-      "role": "FPGA Engineer",
-      "profilePicture": "profile1.jpg",
-      "earnedBadges": [
-        {
-          "badgeId": "badge1",
-          "dateEarned": "2023-06-15",
-          "awardedBy": "user2"
-        },
-        {
-          "badgeId": "badge3",
-          "dateEarned": "2023-07-22",
-          "awardedBy": "user3"
-        }
-      ]
-    },
-    {
-      "id": "user2",
-      "name": "Jane Smith",
-      "role": "Verification Lead",
-      "profilePicture": "profile2.jpg",
-      "earnedBadges": [
-        {
-          "badgeId": "badge2",
-          "dateEarned": "2023-05-10",
-          "awardedBy": "user1"
-        }
-      ]
-    },
-    {
-      "id": "user3",
-      "name": "Alex Johnson",
-      "role": "RTL Designer",
+      "name": "Trig",
+      "role": "Team Member",
       "profilePicture": "",
-      "earnedBadges": [
-        {
-          "badgeId": "badge1",
-          "dateEarned": "2023-08-05",
-          "awardedBy": "user2"
-        }
-      ]
+      "earnedBadges": []
     }
   ],
   "badges": [
     {
-      "id": "badge1",
-      "name": "Gold Star",
-      "icon": "gold_star.png",
-      "description": "Awarded for outstanding performance on a project",
-      "requirements": "Complete a project ahead of schedule with all requirements met",
-      "category": "Project Delivery"
-    },
-    {
-      "id": "badge2",
-      "name": "Team Player",
-      "icon": "team_player.png",
-      "description": "Recognizes excellent collaboration skills",
-      "requirements": "Help teammates overcome significant challenges on multiple occasions",
-      "category": "Code Review & Collaboration"
-    },
-    {
-      "id": "badge3",
-      "name": "Bookworm",
-      "icon": "bookworm.png",
-      "description": "Recognizes dedication to documentation",
-      "requirements": "Create comprehensive documentation that receives positive team feedback",
-      "category": "Documentation & Standards"
+      "name": "new confluence apge",
+      "icon": "",
+      "description": "you made a confluence page",
+      "requirements": "there wasnt a page, nwo there is",
+      "category": "Documentation & Standards",
+      "id": "badge1"
     }
   ],
   "categories": [
@@ -109,30 +56,5 @@
       "name": "Project Delivery"
     }
   ],
-  "activityFeed": [
-    {
-      "id": "activity1",
-      "type": "award",
-      "date": "2023-08-05",
-      "awarderId": "user2",
-      "awardeeId": "user3",
-      "badgeId": "badge1"
-    },
-    {
-      "id": "activity2",
-      "type": "award",
-      "date": "2023-07-22",
-      "awarderId": "user3",
-      "awardeeId": "user1",
-      "badgeId": "badge3"
-    },
-    {
-      "id": "activity3",
-      "type": "award",
-      "date": "2023-06-15",
-      "awarderId": "user2",
-      "awardeeId": "user1",
-      "badgeId": "badge1"
-    }
-  ]
+  "activityFeed": []
 }

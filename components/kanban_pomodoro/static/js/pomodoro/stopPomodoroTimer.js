@@ -18,10 +18,12 @@ export function stopPomodoroTimer(isRunning, setIsRunning, totalTime, setEndTime
     pomodoroToggle.innerHTML = '<i class="fas fa-play"></i> Start';
     
     // Tell server to stop the timer with force sync to ensure all clients update
+    // But ONLY for the current room
     sendTimerUpdate({
         isRunning: false,
         elapsedTime: 0,
-        endTime: null
+        endTime: null,
+        roomSpecificStop: true // Explicitly mark as room-specific
     }, true);
     
     // Reset client-side state
