@@ -50,39 +50,28 @@
   "board": {
     "todo": [
       {
-        "id": "task-0",
-        "text": "asdf",
+        "id": "task-8",
+        "text": "one",
         "details": ""
       },
       {
-        "id": "task-2",
-        "text": "asdf",
-        "details": "dave"
-      },
-      {
-        "id": "task-3",
-        "text": "asdf",
+        "id": "task-7",
+        "text": "two",
         "details": ""
       }
     ],
     "inProgress": [
       {
-        "id": "task-4",
-        "text": "asdf",
+        "id": "task-9",
+        "text": "three",
         "details": ""
       }
     ],
-    "done": [
-      {
-        "id": "task-1",
-        "text": "asdfasdf",
-        "details": ""
-      }
-    ],
-    "taskIdCounter": 5,
+    "done": [],
+    "taskIdCounter": 12,
     "currentTask": {
-      "id": "task-4",
-      "text": "asdf"
+      "id": "task-9",
+      "text": "three"
     }
   },
   "timer": {
